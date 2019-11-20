@@ -49,6 +49,10 @@ Temporary Items
 .apdisk
 
 vault-plugin-secrets-mongodbatlas
-mongodbatlas-database-plugin
+vault-plugin-database-mongodbatlas
 vault*
+
+.idea/
 # End of https://www.gitignore.io/api/go,macos
+#
+

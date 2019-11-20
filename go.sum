@@ -116,6 +116,10 @@ github.com/hashicorp/golang-lru v0.5.1/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ
 github.com/hashicorp/hcl v0.0.0-20180404174102-ef8a98b0bbce/go.mod h1:oZtUIOe8dh44I2q6ScRibXws4Ajl+d+nod3AaR9vL5w=
 github.com/hashicorp/hcl v1.0.0 h1:0Anlzjpi4vEasTeNFn2mLJgTSwt0+6sfsiTG8qcWGx4=
 github.com/hashicorp/hcl v1.0.0/go.mod h1:E5yfLk+7swimpb2L/Alb/PJmXilQ/rhwaUYs4T20WEQ=
+github.com/hashicorp/vault-plugin-database-mongodbatlas v0.0.0-20190522184828-5d7c36ed4ab0 h1:JT/nezlNxqehDdAs7sKiIc5pIKNFKXOBfe0ulLOzb1U=
+github.com/hashicorp/vault-plugin-database-mongodbatlas v0.0.0-20190522184828-5d7c36ed4ab0/go.mod h1:e2f6yXuozQ8D3FNU27/HsXkrvA0+gRNYQ156r6Ee49Q=
+github.com/hashicorp/vault-plugin-secrets-mongodbatlas v0.0.0-20190522184828-5d7c36ed4ab0 h1:xbVCry//ArhWyf7L0gvC/ywWMnZ/wb5IP0jIwyqEWW0=
+github.com/hashicorp/vault-plugin-secrets-mongodbatlas v0.0.0-20190522184828-5d7c36ed4ab0/go.mod h1:HtedzyR3hNLG+NADHE5ZcBuearKUstM8EEw/EElzsDg=
 github.com/hashicorp/vault/api v1.0.5-0.20190805220215-b4347d553834 h1:NXwkgTBtJQW7mrfr0C39u42MSqV1VeUmGazEMfSTP9Y=
 github.com/hashicorp/vault/api v1.0.5-0.20190805220215-b4347d553834/go.mod h1:/esx16KZFuF4o5HlRO/dfXWknTeEOW8jmjHmn0Qny3Y=
 github.com/hashicorp/vault/sdk v0.1.14-0.20190805214312-16112a336457 h1:kyUyet0dI5DBY/UDa5s/XFiGmdtXOqo4KHpRSwnVD9o=

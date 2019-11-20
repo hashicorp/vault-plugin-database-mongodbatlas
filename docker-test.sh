@@ -26,16 +26,8 @@ vault operator unseal $(echo "$initoutput" | jq -r .unseal_keys_hex[0])
 
 export VAULT_TOKEN=$(echo "$initoutput" | jq -r .root_token)
 
-vault write sys/plugins/catalog/secret/vault-plugin-secrets-mongodbatlas \
-    sha_256=$(shasum -a 256 bin/vault-plugin-secrets-mongodbatlas | cut -d' ' -f1) \
-    command="vault-plugin-secrets-mongodbatlas"
-
-vault secrets enable \
-    -path="mongodbatlas" \
-    -plugin-name="vault-plugin-secrets-mongodbatlas" plugin
-
 vault write sys/plugins/catalog/database/mongodbatlas-database-plugin \
-    sha256=$(shasum -a 256 bin/mongodbatlas-database-plugin | cut -d' ' -f1) \
-    command="mongodbatlas-database-plugin"
+    sha256=$(shasum -a 256 bin/vault-plugin-database-mongodbatlas | cut -d' ' -f1) \
+    command="vault-plugin-database-mongodbatlas"
 
 vault secrets enable database
