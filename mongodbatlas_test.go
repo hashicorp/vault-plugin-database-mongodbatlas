@@ -212,18 +212,15 @@ func testCreateAtlasDBUser(t testing.TB, projectID, publicKey, privateKey, usern
 
 }
 
-func testCredsExists(projectID, publicKey, privateKey, username string) error {
+func testCredsExists(projectID, publicKey, privateKey, username string) (err error) {
 	client, err := getClient(publicKey, privateKey)
 	if err != nil {
-		return err
+		return
 	}
 
 	_, _, err = client.DatabaseUsers.Get(context.Background(), projectID, username)
-	if err != nil {
-		return err
-	}
 
-	return err
+	return
 }
 
 func deleteCredentials(projectID, publicKey, privateKey, username string) error {
