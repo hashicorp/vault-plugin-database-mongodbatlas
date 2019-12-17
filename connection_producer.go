@@ -88,6 +88,10 @@ func (c *mongoDBAtlasConnectionProducer) Connection(_ context.Context) (interfac
 	}
 
 	client, err := mongodbatlas.New(cl)
+	if err != nil {
+		return nil, err
+	}
+
 	c.client = client
 
 	return c.client, nil
