@@ -193,3 +193,8 @@ func (m *MongoDBAtlas) RotateRootCredentials(ctx context.Context, statements []s
 func (m *MongoDBAtlas) Type() (string, error) {
 	return mongoDBAtlasTypeName, nil
 }
+
+type mongoDBAtlasStatement struct {
+	DatabaseName string              `json:"database_name"`
+	Roles        []mongodbatlas.Role `json:"roles,omitempty"`
+}
