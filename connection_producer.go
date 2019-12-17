@@ -33,8 +33,6 @@ func (c *mongoDBAtlasConnectionProducer) Init(ctx context.Context, conf map[stri
 	c.Lock()
 	defer c.Unlock()
 
-	c.RawConfig = conf
-
 	err := mapstructure.WeakDecode(conf, c)
 	if err != nil {
 		return nil, err
@@ -47,6 +45,8 @@ func (c *mongoDBAtlasConnectionProducer) Init(ctx context.Context, conf map[stri
 	if len(c.PrivateKey) == 0 {
 		return nil, errors.New("Private Key is not set")
 	}
+
+	c.RawConfig = conf
 
 	// Set initialized to true at this point since all fields are set,
 	// and the connection can be established at a later time.
