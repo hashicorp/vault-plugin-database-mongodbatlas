@@ -57,7 +57,6 @@ func (c *mongoDBAtlasConnectionProducer) Init(ctx context.Context, conf map[stri
 
 func (c *mongoDBAtlasConnectionProducer) secretValues() map[string]interface{} {
 	return map[string]interface{}{
-		c.PublicKey:  "[public_key]",
 		c.PrivateKey: "[private_key]",
 	}
 }
