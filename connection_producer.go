@@ -23,6 +23,11 @@ type mongoDBAtlasConnectionProducer struct {
 	sync.Mutex
 }
 
+func (c *mongoDBAtlasConnectionProducer) Initialize(ctx context.Context, conf map[string]interface{}, verifyConnection bool) error {
+	_, err := c.Init(ctx, conf, verifyConnection)
+	return err
+}
+
 // Initialize parses connection configuration.
 func (c *mongoDBAtlasConnectionProducer) Init(ctx context.Context, conf map[string]interface{}, verifyConnection bool) (map[string]interface{}, error) {
 	c.Lock()
