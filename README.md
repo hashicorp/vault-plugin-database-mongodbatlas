@@ -148,7 +148,7 @@ Once the server is started, register the plugins in the Vault server's [plugin c
 To register the MongoDB Atlas Secrets Engine run the following:
 
 ```sh
-$ vault write sys/plugins/catalog/vault-plugin-secrets-mongodbatlas \
+$ vault write sys/plugins/catalog/secret/vault-plugin-secrets-mongodbatlas \
         sha_256="$(shasum -a 256 path/to/plugin/directory/vault-plugin-secrets-mongodbatlas | cut -d " " -f1)" \
         command="vault-plugin-secrets-mongodbatlas"
 ```
