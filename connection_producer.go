@@ -39,7 +39,7 @@ func (c *mongoDBAtlasConnectionProducer) Init(ctx context.Context, conf map[stri
 	}
 
 	if len(c.PublicKey) == 0 {
-		return nil, errors.New("Public Key is not set")
+		return nil, errors.New("public Key is not set")
 	}
 
 	if len(c.PrivateKey) == 0 {
