@@ -101,13 +101,13 @@ Clone this repository:
 
 ```
 
-mkdir $GOPATH/src/github.com/hashicorp/vault-plugin-secrets-mongodbatlas`
-cd $GOPATH/src/github.com/hashicorp/
-git clone git@github.com:mongodb/vault-plugin-secrets-mongodbatlas.git
+mkdir $GOPATH/src/github.com/mongodb/vault-plugin-database-mongodbatlas`
+cd $GOPATH/src/github.com/mongodb/
+git clone git@github.com:mongodb/vault-plugin-database-mongodbatlas.git
 go mod download
 
 ```
-(or use `go get github.com/mongodb/vault-plugin-secrets-mongodbatlas` ).
+(or use `go get github.com/mongodb/vault-plugin-database-mongodbatlas` ).
 
 Then you can download any of the required tools to bootstrap your environment:
 
@@ -143,26 +143,6 @@ $ vault server -config=path/to/config.json ...
 
 Once the server is started, register the plugins in the Vault server's [plugin catalog](https://www.vaultproject.io/docs/internals/plugins.html#plugin-catalog):
 
-#### MongoDB Atlas Secrets Engine
-
-To register the MongoDB Atlas Secrets Engine run the following:
-
-```sh
-$ vault write sys/plugins/catalog/vault-plugin-secrets-mongodbatlas \
-        sha_256="$(shasum -a 256 path/to/plugin/directory/vault-plugin-secrets-mongodbatlas | cut -d " " -f1)" \
-        command="vault-plugin-secrets-mongodbatlas"
-```
-
-Any name can be substituted for the plugin name "vault-plugin-secrets-mongodbatlas". This
-name will be referenced in the next step, where we enable the secrets
-plugin backend using the MongoDB Atlas Secrets Engine:
-
-```sh
-$ vault secrets enable --plugin-name='vault-plugin-secrets-mongodbatlas' --path="vault-plugin-secrets-mongodbatlas" plugin
-
-```
-
-#### Database Secrets Engine for MongoDB Atlas plugin
 
 The following steps are required to register the Database Secrets Engine for MongoDB Atlas plugin:
 
@@ -190,10 +170,9 @@ The integration tests are run by `$ make test` and rather than firing real
 API calls, they fire API calls at a local test server that returns expected
 responses.
 
-The acceptance tests fire real API calls, and are located in `plugins/logical/mongodbatlas/acceptance_test.go`
-and `plugins/database/mongodbatlas/mongodbatlas_test.go`. These should be run
-once as a final step before placing a PR. Please see `acceptance_test.go` and
-`mongodbatlas_test.go` to learn the environment variables that will need to be set.
+The acceptance tests fire real API calls, and are located in `mongodbatlas_test.go`. 
+These should be run once as a final step before placing a PR. Please see `mongodbatlas_test.go` 
+to learn the environment variables that will need to be set.
 
 **Warning:** The acceptance tests create/destroy/modify *real resources*,
 which may incur real costs in some cases. In the presence of a bug,
