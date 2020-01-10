@@ -41,7 +41,7 @@ has a number of parameters to further configure a connection.
   "allowed_roles": "readonly",
   "public_key": "aPublicKey",
   "private_key": "aPrivateKey",
-  "project_id": "aProjectID",
+  "project_id": "aProjectID"
 }
 ```
 
