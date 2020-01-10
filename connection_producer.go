@@ -72,6 +72,9 @@ func (c *mongoDBAtlasConnectionProducer) Close() error {
 }
 
 func (c *mongoDBAtlasConnectionProducer) Connection(_ context.Context) (interface{}, error) {
+	c.Lock()
+	defer c.Unlock()
+
 	if !c.Initialized {
 		return nil, connutil.ErrNotInitialized
 	}

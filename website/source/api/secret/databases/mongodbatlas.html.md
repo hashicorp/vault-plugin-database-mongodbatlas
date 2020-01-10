@@ -89,14 +89,16 @@ list the plugin does not support that statement type.
 
 ```json
 {
-	"database_name": "admin",
-	"roles": [{
-		"databaseName": "admin",
-		"roleName": "atlasAdmin"
-	},
-  {
-    "collectionName": "acollection",
-    "roleName": "read"
-  }]
+  "database_name": "admin",
+  "roles": [
+    {
+      "databaseName": "admin",
+      "roleName": "atlasAdmin"
+    },
+    {
+      "collectionName": "acollection",
+      "roleName": "read"
+    }
+  ]
 }
 ```

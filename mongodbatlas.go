@@ -9,7 +9,6 @@ import (
 
 	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/sdk/database/dbplugin"
-
 	"github.com/hashicorp/vault/sdk/database/helper/credsutil"
 	"github.com/hashicorp/vault/sdk/database/helper/dbutil"
 	"github.com/mongodb/go-client-mongodb-atlas/mongodbatlas"
@@ -17,6 +16,7 @@ import (
 
 const mongoDBAtlasTypeName = "mongodbatlas"
 
+// Verify interface is implemented
 var _ dbplugin.Database = &MongoDBAtlas{}
 
 type MongoDBAtlas struct {
