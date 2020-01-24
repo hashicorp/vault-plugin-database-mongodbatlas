@@ -72,8 +72,8 @@ func (c *mongoDBAtlasConnectionProducer) Close() error {
 }
 
 func (c *mongoDBAtlasConnectionProducer) Connection(_ context.Context) (interface{}, error) {
-	c.Lock()
-	defer c.Unlock()
+	// This is intentionally not grabbing the lock since the calling functions (e.g. CreateUser)
+	// are claiming it. (The locking patterns could be refactored to be more consistent/clear.)
 
 	if !c.Initialized {
 		return nil, connutil.ErrNotInitialized
