@@ -35,9 +35,9 @@ func new() *MongoDBAtlas {
 	connProducer.Type = mongoDBAtlasTypeName
 
 	credsProducer := &credsutil.SQLCredentialsProducer{
-		DisplayNameLen: 15,
+		DisplayNameLen: 0,
 		RoleNameLen:    15,
-		UsernameLen:    100,
+		UsernameLen:    20,
 		Separator:      "-",
 	}
 
