@@ -2,7 +2,6 @@ package mongodbatlas
 
 import (
 	"context"
-	"fmt"
 	"os"
 	"testing"
 	"time"
@@ -114,8 +113,6 @@ func TestAcceptanceDatabaseUser_CreateUserWithSpecialChar(t *testing.T) {
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
-
-	fmt.Println(username)
 
 	if err := testCredsExists(projectID, publicKey, privateKey, username); err != nil {
 		t.Fatalf("Credentials were not created: %s", err)
