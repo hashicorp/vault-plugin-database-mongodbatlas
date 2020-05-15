@@ -79,6 +79,51 @@ func TestAcceptanceDatabaseUser_CreateUser(t *testing.T) {
 
 }
 
+func TestAcceptanceDatabaseUser_CreateUserWithSpecialChar(t *testing.T) {
+	if !runAcceptanceTests {
+		t.SkipNow()
+	}
+
+	publicKey := os.Getenv("ATLAS_PUBLIC_KEY")
+	privateKey := os.Getenv("ATLAS_PRIVATE_KEY")
+	projectID := os.Getenv("ATLAS_PROJECT_ID")
+
+	connectionDetails := map[string]interface{}{
+		"public_key":  publicKey,
+		"private_key": privateKey,
+		"project_id":  projectID,
+	}
+
+	db := new()
+	_, err := db.Init(context.Background(), connectionDetails, true)
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	statements := dbplugin.Statements{
+		Creation: []string{testMongoDBAtlasRole},
+	}
+
+	usernameConfig := dbplugin.UsernameConfig{
+		DisplayName: "test.test",
+		RoleName:    "test",
+	}
+
+	username, _, err := db.CreateUser(context.Background(), statements, usernameConfig, time.Now().Add(time.Minute))
+	if err != nil {
+		t.Fatalf("err: %s", err)
+	}
+
+	if err := testCredsExists(projectID, publicKey, privateKey, username); err != nil {
+		t.Fatalf("Credentials were not created: %s", err)
+	}
+
+	if err := deleteCredentials(projectID, publicKey, privateKey, username); err != nil {
+		t.Fatalf("Credentials could not be deleted: %s", err)
+	}
+
+}
+
 func TestAcceptanceDatabaseUser_RevokeUser(t *testing.T) {
 	if !runAcceptanceTests {
 		t.SkipNow()
