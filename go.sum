@@ -103,9 +103,11 @@ github.com/mitchellh/go-testing-interface v1.0.0/go.mod h1:kRemZodwjscx+RGhAo8eI
 github.com/mitchellh/go-wordwrap v1.0.0/go.mod h1:ZXFpozHsX6DPmq2I0TCekCxypsnAUbP2oI0UX1GXzOo=
 github.com/mitchellh/mapstructure v1.1.2 h1:fmNYVwqnSfB9mZU6OS2O6GsXM+wcskZDuKQzvN1EDeE=
 github.com/mitchellh/mapstructure v1.1.2/go.mod h1:FVVH3fgwuzCH5S8UJGiWEs2h04kUh9fWfEaFds41c1Y=
+github.com/mitchellh/mapstructure v1.3.1 h1:cCBH2gTD2K0OtLlv/Y5H01VQCqmlDxz30kS5Y5bqfLA=
+github.com/mitchellh/mapstructure v1.3.1/go.mod h1:bFUtVrKA4DC2yAKiSyO/QUcy7e+RRV2QTWOzhPopBRo=
 github.com/mitchellh/reflectwalk v1.0.0/go.mod h1:mSTlrgnPZtwu0c4WaC2kGObEpuNDbx0jmZXqmk4esnw=
-github.com/mongodb/go-client-mongodb-atlas v0.1.2 h1:qmUme1TlQBPZupmXMnpD8DxnfGXLVGs3w+0Z17HBiSA=
-github.com/mongodb/go-client-mongodb-atlas v0.1.2/go.mod h1:LS8O0YLkA+sbtOb3fZLF10yY3tJM+1xATXMJ3oU35LU=
+github.com/mongodb/go-client-mongodb-atlas v0.2.0 h1:UH02byrzAlboirAMgV0sMIJqXbEfmGXIBa5IniwUZNI=
+github.com/mongodb/go-client-mongodb-atlas v0.2.0/go.mod h1:LS8O0YLkA+sbtOb3fZLF10yY3tJM+1xATXMJ3oU35LU=
 github.com/mwielbut/pointy v1.1.0 h1:U5/YEfoIkaGCHv0St3CgjduqXID4FNRoyZgLM1kY9vg=
 github.com/mwielbut/pointy v1.1.0/go.mod h1:MvvO+uMFj9T5DMda33HlvogsFBX7pWWKAkFIn4teYwY=
 github.com/oklog/run v1.0.0 h1:Ru7dDtJNOyC66gQ5dQmaCa0qIsAUFY3sFpK1Xk8igrw=

@@ -134,7 +134,7 @@ func (m *MongoDBAtlas) RevokeUser(ctx context.Context, statements dbplugin.State
 		return err
 	}
 
-	_, err = client.DatabaseUsers.Delete(ctx, m.ProjectID, username)
+	_, err = client.DatabaseUsers.Delete(ctx, "admin", m.ProjectID, username)
 	return err
 }
 

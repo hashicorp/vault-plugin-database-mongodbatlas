@@ -263,7 +263,7 @@ func testCredsExists(projectID, publicKey, privateKey, username string) (err err
 		return
 	}
 
-	_, _, err = client.DatabaseUsers.Get(context.Background(), projectID, username)
+	_, _, err = client.DatabaseUsers.Get(context.Background(), "admin", projectID, username)
 
 	return
 }
@@ -273,7 +273,7 @@ func deleteCredentials(projectID, publicKey, privateKey, username string) error 
 	if err != nil {
 		return err
 	}
-	_, err = client.DatabaseUsers.Delete(context.Background(), projectID, username)
+	_, err = client.DatabaseUsers.Delete(context.Background(), "admin", projectID, username)
 
 	return err
 }
