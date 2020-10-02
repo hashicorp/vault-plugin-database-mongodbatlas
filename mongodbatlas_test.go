@@ -3,11 +3,12 @@ package mongodbatlas
 import (
 	"context"
 	"os"
+	"reflect"
 	"testing"
-	"time"
 
 	"github.com/Sectorbob/mlab-ns2/gae/ns/digest"
-	"github.com/hashicorp/vault/sdk/database/dbplugin"
+	"github.com/hashicorp/vault/sdk/database/newdbplugin"
+	dbtesting "github.com/hashicorp/vault/sdk/database/newdbplugin/testing"
 	"github.com/mongodb/go-client-mongodb-atlas/mongodbatlas"
 )
 
@@ -23,10 +24,22 @@ func TestIntegrationDatabaseUser_Initialize(t *testing.T) {
 		"private_key": "domine",
 	}
 	db := new()
+	defer dbtesting.AssertClose(t, db)
 
-	_, err := db.Init(context.Background(), connectionDetails, true)
-	if err != nil {
-		t.Fatalf("err: %s", err)
+	req := newdbplugin.InitializeRequest{
+		Config:           connectionDetails,
+		VerifyConnection: true,
+	}
+
+	expectedConfig := map[string]interface{}{
+		"public_key":  "aspergesme",
+		"private_key": "domine",
+	}
+
+	resp := dbtesting.AssertInitialize(t, db, req)
+
+	if !reflect.DeepEqual(resp.Config, expectedConfig) {
+		t.Fatalf("Actual config: %#v\nExpected config: %#v", resp.Config, expectedConfig)
 	}
 
 	if !db.Initialized {
@@ -50,30 +63,34 @@ func TestAcceptanceDatabaseUser_CreateUser(t *testing.T) {
 	}
 
 	db := new()
-	_, err := db.Init(context.Background(), connectionDetails, true)
+	defer dbtesting.AssertClose(t, db)
+
+	initReq := newdbplugin.InitializeRequest{
+		Config: connectionDetails,
+	}
+
+	dbtesting.AssertInitialize(t, db, initReq)
+
+	createReq := newdbplugin.NewUserRequest{
+		UsernameConfig: newdbplugin.UsernameMetadata{
+			DisplayName: "test",
+			RoleName:    "test",
+		},
+		Statements: newdbplugin.Statements{
+			Commands: []string{testMongoDBAtlasRole},
+		},
+	}
+
+	createResp, err := db.NewUser(context.Background(), createReq)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
-	statements := dbplugin.Statements{
-		Creation: []string{testMongoDBAtlasRole},
-	}
-
-	usernameConfig := dbplugin.UsernameConfig{
-		DisplayName: "test",
-		RoleName:    "test",
-	}
-
-	username, _, err := db.CreateUser(context.Background(), statements, usernameConfig, time.Now().Add(time.Minute))
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	if err := testCredsExists(projectID, publicKey, privateKey, username); err != nil {
+	if err := testCredsExists(projectID, publicKey, privateKey, createResp.Username); err != nil {
 		t.Fatalf("Credentials were not created: %s", err)
 	}
 
-	if err := deleteCredentials(projectID, publicKey, privateKey, username); err != nil {
+	if err := deleteCredentials(projectID, publicKey, privateKey, createResp.Username); err != nil {
 		t.Fatalf("Credentials could not be deleted: %s", err)
 	}
 
@@ -95,36 +112,40 @@ func TestAcceptanceDatabaseUser_CreateUserWithSpecialChar(t *testing.T) {
 	}
 
 	db := new()
-	_, err := db.Init(context.Background(), connectionDetails, true)
+	defer dbtesting.AssertClose(t, db)
+
+	initReq := newdbplugin.InitializeRequest{
+		Config: connectionDetails,
+	}
+
+	dbtesting.AssertInitialize(t, db, initReq)
+
+	createReq := newdbplugin.NewUserRequest{
+		UsernameConfig: newdbplugin.UsernameMetadata{
+			DisplayName: "test.test",
+			RoleName:    "test",
+		},
+		Statements: newdbplugin.Statements{
+			Commands: []string{testMongoDBAtlasRole},
+		},
+	}
+
+	createResp, err := db.NewUser(context.Background(), createReq)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
-	statements := dbplugin.Statements{
-		Creation: []string{testMongoDBAtlasRole},
-	}
-
-	usernameConfig := dbplugin.UsernameConfig{
-		DisplayName: "test.test",
-		RoleName:    "test",
-	}
-
-	username, _, err := db.CreateUser(context.Background(), statements, usernameConfig, time.Now().Add(time.Minute))
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	if err := testCredsExists(projectID, publicKey, privateKey, username); err != nil {
+	if err := testCredsExists(projectID, publicKey, privateKey, createResp.Username); err != nil {
 		t.Fatalf("Credentials were not created: %s", err)
 	}
 
-	if err := deleteCredentials(projectID, publicKey, privateKey, username); err != nil {
+	if err := deleteCredentials(projectID, publicKey, privateKey, createResp.Username); err != nil {
 		t.Fatalf("Credentials could not be deleted: %s", err)
 	}
 
 }
 
-func TestAcceptanceDatabaseUser_RevokeUser(t *testing.T) {
+func TestAcceptanceDatabaseUser_DeleteUser(t *testing.T) {
 	if !runAcceptanceTests {
 		t.SkipNow()
 	}
@@ -140,33 +161,44 @@ func TestAcceptanceDatabaseUser_RevokeUser(t *testing.T) {
 	}
 
 	db := new()
-	_, err := db.Init(context.Background(), connectionDetails, true)
+	defer dbtesting.AssertClose(t, db)
+
+	initReq := newdbplugin.InitializeRequest{
+		Config: connectionDetails,
+	}
+
+	dbtesting.AssertInitialize(t, db, initReq)
+
+	createReq := newdbplugin.NewUserRequest{
+		UsernameConfig: newdbplugin.UsernameMetadata{
+			DisplayName: "test",
+			RoleName:    "test",
+		},
+		Statements: newdbplugin.Statements{
+			Commands: []string{testMongoDBAtlasRole},
+		},
+	}
+
+	createResp, err := db.NewUser(context.Background(), createReq)
 	if err != nil {
 		t.Fatalf("err: %s", err)
 	}
 
-	statements := dbplugin.Statements{
-		Creation: []string{testMongoDBAtlasRole},
-	}
-
-	usernameConfig := dbplugin.UsernameConfig{
-		DisplayName: "test",
-		RoleName:    "test",
-	}
-
-	username, _, err := db.CreateUser(context.Background(), statements, usernameConfig, time.Now().Add(time.Minute))
-	if err != nil {
-		t.Fatalf("err: %s", err)
+	if err := testCredsExists(projectID, publicKey, privateKey, createResp.Username); err != nil {
+		t.Fatalf("Credentials were not created: %s", err)
 	}
 
 	// Test default revocation statement
-	err = db.RevokeUser(context.Background(), statements, username)
-	if err != nil {
-		t.Fatalf("err: %s", err)
+	delReq := newdbplugin.DeleteUserRequest{
+		Username: createResp.Username,
 	}
+
+	dbtesting.AssertDeleteUser(t, db, delReq)
+
+	// TODO: Assert not exist
 }
 
-func TestAcceptanceDatabaseUser_SetCredentials(t *testing.T) {
+func TestAcceptanceDatabaseUser_UpdateUser_Password(t *testing.T) {
 	if !runAcceptanceTests {
 		t.SkipNow()
 	}
@@ -182,10 +214,13 @@ func TestAcceptanceDatabaseUser_SetCredentials(t *testing.T) {
 	}
 
 	db := new()
-	_, err := db.Init(context.Background(), connectionDetails, true)
-	if err != nil {
-		t.Fatalf("err: %s", err)
+	defer dbtesting.AssertClose(t, db)
+
+	initReq := newdbplugin.InitializeRequest{
+		Config: connectionDetails,
 	}
+
+	dbtesting.AssertInitialize(t, db, initReq)
 
 	// create the database user in advance, and test the connection
 	dbUser := "testmongouser"
@@ -201,30 +236,17 @@ func TestAcceptanceDatabaseUser_SetCredentials(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	usernameConfig := dbplugin.StaticUserConfig{
+	updateReq := newdbplugin.UpdateUserRequest{
 		Username: dbUser,
-		Password: newPassword,
+		Password: &newdbplugin.ChangePassword{
+			NewPassword: newPassword,
+		},
 	}
 
-	statements := dbplugin.Statements{
-		Creation: []string{testMongoDBAtlasRole},
-	}
+	dbtesting.AssertUpdateUser(t, db, updateReq)
 
-	username, password, err := db.SetCredentials(context.Background(), statements, usernameConfig)
-	if err != nil {
-		t.Fatalf("err: %s", err)
-	}
-
-	if err := testCredsExists(projectID, publicKey, privateKey, username); err != nil {
+	if err := testCredsExists(projectID, publicKey, privateKey, dbUser); err != nil {
 		t.Fatalf("Could not connect with new credentials: %s", err)
-	}
-	// confirm the original creds used to set still work (should be the same)
-	if err := testCredsExists(projectID, publicKey, privateKey, username); err != nil {
-		t.Fatalf("Could not connect with new credentials: %s", err)
-	}
-
-	if (dbUser != username) || (newPassword != password) {
-		t.Fatalf("username/password mismatch: (%s)/(%s) vs (%s)/(%s)", dbUser, username, newPassword, password)
 	}
 
 	if err := deleteCredentials(projectID, publicKey, privateKey, dbUser); err != nil {
