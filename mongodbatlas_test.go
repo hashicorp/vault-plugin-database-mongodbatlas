@@ -231,10 +231,7 @@ func TestAcceptanceDatabaseUser_UpdateUser_Password(t *testing.T) {
 		t.Fatalf("Could not connect with new credentials: %s", err)
 	}
 
-	newPassword, err := db.GenerateCredentials(context.Background())
-	if err != nil {
-		t.Fatal(err)
-	}
+	newPassword := "some-other-password"
 
 	updateReq := newdbplugin.UpdateUserRequest{
 		Username: dbUser,

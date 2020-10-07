@@ -6,13 +6,11 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/mitchellh/mapstructure"
-
 	"github.com/hashicorp/vault/api"
-	"github.com/hashicorp/vault/sdk/database/dbplugin"
 	"github.com/hashicorp/vault/sdk/database/helper/credsutil"
 	"github.com/hashicorp/vault/sdk/database/helper/dbutil"
 	"github.com/hashicorp/vault/sdk/database/newdbplugin"
+	"github.com/mitchellh/mapstructure"
 	"github.com/mongodb/go-client-mongodb-atlas/mongodbatlas"
 )
 
@@ -23,7 +21,6 @@ var _ newdbplugin.Database = &MongoDBAtlas{}
 
 type MongoDBAtlas struct {
 	*mongoDBAtlasConnectionProducer
-	credsutil.CredentialsProducer
 }
 
 func New() (interface{}, error) {
@@ -37,16 +34,8 @@ func new() *MongoDBAtlas {
 		Type: mongoDBAtlasTypeName,
 	}
 
-	credsProducer := &credsutil.SQLCredentialsProducer{
-		DisplayNameLen: credsutil.NoneLength,
-		RoleNameLen:    15,
-		UsernameLen:    20,
-		Separator:      "-",
-	}
-
 	return &MongoDBAtlas{
 		mongoDBAtlasConnectionProducer: connProducer,
-		CredentialsProducer:            credsProducer,
 	}
 }
 
@@ -57,7 +46,7 @@ func Run(apiTLSConfig *api.TLSConfig) error {
 		return err
 	}
 
-	dbplugin.Serve(dbType.(dbplugin.Database), api.VaultPluginTLSProvider(apiTLSConfig))
+	newdbplugin.Serve(dbType.(newdbplugin.Database), api.VaultPluginTLSProvider(apiTLSConfig))
 
 	return nil
 }
@@ -106,15 +95,12 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req newdbplugin.NewUserReque
 		return newdbplugin.NewUserResponse{}, err
 	}
 
-	username, err := m.GenerateUsername(dbplugin.UsernameConfig{
-		DisplayName: req.UsernameConfig.DisplayName,
-		RoleName:    req.UsernameConfig.RoleName,
-	})
-	if err != nil {
-		return newdbplugin.NewUserResponse{}, err
-	}
-
-	password, err := m.GeneratePassword()
+	username, err := credsutil.GenerateUsername(
+		credsutil.DisplayName("", credsutil.NoneLength),
+		credsutil.RoleName(req.UsernameConfig.RoleName, 15),
+		credsutil.MaxLength(20),
+		credsutil.Separator("-"),
+	)
 	if err != nil {
 		return newdbplugin.NewUserResponse{}, err
 	}
@@ -137,7 +123,7 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req newdbplugin.NewUserReque
 
 	databaseUserRequest := &mongodbatlas.DatabaseUser{
 		Username:     username,
-		Password:     password,
+		Password:     req.Password,
 		DatabaseName: databaseUser.DatabaseName,
 		Roles:        databaseUser.Roles,
 	}
@@ -156,28 +142,33 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req newdbplugin.NewUserReque
 
 func (m *MongoDBAtlas) UpdateUser(ctx context.Context, req newdbplugin.UpdateUserRequest) (newdbplugin.UpdateUserResponse, error) {
 	if req.Password == nil {
-		return newdbplugin.UpdateUserResponse{}, nil
+		err := m.changePassword(ctx, req.Username, req.Password.NewPassword)
+		return newdbplugin.UpdateUserResponse{}, err
 	}
 
+	// This also results in an no-op if the expiration is updated due to renewal.
+	return newdbplugin.UpdateUserResponse{}, nil
+}
+
+func (m *MongoDBAtlas) changePassword(ctx context.Context, username, password string) error {
 	m.Lock()
 	defer m.Unlock()
 
 	client, err := m.getConnection(ctx)
 	if err != nil {
-		return newdbplugin.UpdateUserResponse{}, err
+		return err
 	}
 
 	databaseUserRequest := &mongodbatlas.DatabaseUser{
-		Password: req.Password.NewPassword,
+		Password: password,
 	}
 
-	_, _, err = client.DatabaseUsers.Update(context.Background(), m.ProjectID, req.Username, databaseUserRequest)
+	_, _, err = client.DatabaseUsers.Update(context.Background(), m.ProjectID, username, databaseUserRequest)
 	if err != nil {
-		return newdbplugin.UpdateUserResponse{}, err
+		return err
 	}
 
-	return newdbplugin.UpdateUserResponse{}, nil
-
+	return nil
 }
 
 func (m *MongoDBAtlas) DeleteUser(ctx context.Context, req newdbplugin.DeleteUserRequest) (newdbplugin.DeleteUserResponse, error) {
