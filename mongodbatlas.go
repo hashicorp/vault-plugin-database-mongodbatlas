@@ -105,11 +105,11 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req newdbplugin.NewUserReque
 		return newdbplugin.NewUserResponse{}, err
 	}
 
-	// Unmarshal statements.CreationStatements into mongodbRoles
+	// Unmarshal creation statements into mongodb roles
 	var databaseUser mongoDBAtlasStatement
 	err = json.Unmarshal([]byte(req.Statements.Commands[0]), &databaseUser)
 	if err != nil {
-		return newdbplugin.NewUserResponse{}, fmt.Errorf("Error unmarshalling statement %s", err)
+		return newdbplugin.NewUserResponse{}, fmt.Errorf("error unmarshalling statement %s", err)
 	}
 
 	// Default to "admin" if no db provided
@@ -141,7 +141,7 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req newdbplugin.NewUserReque
 }
 
 func (m *MongoDBAtlas) UpdateUser(ctx context.Context, req newdbplugin.UpdateUserRequest) (newdbplugin.UpdateUserResponse, error) {
-	if req.Password == nil {
+	if req.Password != nil {
 		err := m.changePassword(ctx, req.Username, req.Password.NewPassword)
 		return newdbplugin.UpdateUserResponse{}, err
 	}
