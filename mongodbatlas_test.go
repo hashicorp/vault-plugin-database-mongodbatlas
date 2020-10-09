@@ -57,6 +57,9 @@ func TestMain(m *testing.M) {
 	os.Exit(code)
 }
 
+// testController takes care of performing one-time setup and teardown tasks per
+// test run, such as adding the IP of the machine to Atlas' allowlist. This is
+// only applicable when running acceptance tests.
 type testController struct {
 	client    *mongodbatlas.Client
 	ip        string
@@ -76,7 +79,6 @@ func newTestController() (testController, error) {
 	// for the project during the test run
 	ip := os.Getenv(envVarAtlasAllowListIP)
 
-	// Remove access to the cluster
 	client, err := getClient(publicKey, privateKey)
 	if err != nil {
 		return testController{}, err

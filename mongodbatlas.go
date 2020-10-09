@@ -86,8 +86,12 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req newdbplugin.NewUserReque
 	m.Lock()
 	defer m.Unlock()
 
+	// Statement length checks
 	if len(req.Statements.Commands) == 0 {
 		return newdbplugin.NewUserResponse{}, dbutil.ErrEmptyCreationStatement
+	}
+	if len(req.Statements.Commands) > 1 {
+		return newdbplugin.NewUserResponse{}, fmt.Errorf("only 1 creation statement supported for creation")
 	}
 
 	client, err := m.getConnection(ctx)
@@ -164,11 +168,7 @@ func (m *MongoDBAtlas) changePassword(ctx context.Context, username, password st
 	}
 
 	_, _, err = client.DatabaseUsers.Update(context.Background(), m.ProjectID, username, databaseUserRequest)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return err
 }
 
 func (m *MongoDBAtlas) DeleteUser(ctx context.Context, req newdbplugin.DeleteUserRequest) (newdbplugin.DeleteUserResponse, error) {
