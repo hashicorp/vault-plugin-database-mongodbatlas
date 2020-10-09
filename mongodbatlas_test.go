@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"net/url"
 	"os"
 	"reflect"
 	"testing"
@@ -20,9 +21,17 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-const envVarRunAccTests = "VAULT_ACC"
+const (
+	testMongoDBAtlasRole = `{"roles": [{"databaseName":"admin","roleName":"readWriteAnyDatabase"}]}`
 
-const testMongoDBAtlasRole = `{"roles": [{"databaseName":"admin","roleName":"readWriteAnyDatabase"}]}`
+	envVarAtlasPublicKey   = "ATLAS_PUBLIC_KEY"
+	envVarAtlasPrivateKey  = "ATLAS_PRIVATE_KEY"
+	envVarAtlasProjectID   = "ATLAS_PROJECT_ID"
+	envVarAtlasConnURL     = "ATLAS_CONN_URL"
+	envVarAtlasAllowListIP = "ATLAS_ALLOWLIST_IP"
+
+	envVarRunAccTests = "VAULT_ACC"
+)
 
 var runAcceptanceTests = os.Getenv(envVarRunAccTests) == "1"
 
@@ -59,13 +68,13 @@ func newTestController() (testController, error) {
 		return testController{}, nil
 	}
 
-	publicKey := os.Getenv("ATLAS_PUBLIC_KEY")
-	privateKey := os.Getenv("ATLAS_PRIVATE_KEY")
-	projectID := os.Getenv("ATLAS_PROJECT_ID")
+	publicKey := os.Getenv(envVarAtlasPublicKey)
+	privateKey := os.Getenv(envVarAtlasPrivateKey)
+	projectID := os.Getenv(envVarAtlasProjectID)
 
 	// This is the public IP of your machine so that it gets whitelisted
 	// for the project during the test run
-	ip := os.Getenv("ATLAS_PUBLIC_IP")
+	ip := os.Getenv(envVarAtlasAllowListIP)
 
 	// Remove access to the cluster
 	client, err := getClient(publicKey, privateKey)
@@ -139,10 +148,10 @@ func TestAcceptanceDatabaseUser_CreateUser(t *testing.T) {
 		t.SkipNow()
 	}
 
-	publicKey := os.Getenv("ATLAS_PUBLIC_KEY")
-	privateKey := os.Getenv("ATLAS_PRIVATE_KEY")
-	projectID := os.Getenv("ATLAS_PROJECT_ID")
-	connURL := os.Getenv("ATLAS_CONN_URL")
+	publicKey := os.Getenv(envVarAtlasPublicKey)
+	privateKey := os.Getenv(envVarAtlasPrivateKey)
+	projectID := os.Getenv(envVarAtlasProjectID)
+	connURL := os.Getenv(envVarAtlasConnURL)
 
 	connectionDetails := map[string]interface{}{
 		"public_key":  publicKey,
@@ -184,10 +193,10 @@ func TestAcceptanceDatabaseUser_CreateUserWithSpecialChar(t *testing.T) {
 		t.SkipNow()
 	}
 
-	publicKey := os.Getenv("ATLAS_PUBLIC_KEY")
-	privateKey := os.Getenv("ATLAS_PRIVATE_KEY")
-	projectID := os.Getenv("ATLAS_PROJECT_ID")
-	connURL := os.Getenv("ATLAS_CONN_URL")
+	publicKey := os.Getenv(envVarAtlasPublicKey)
+	privateKey := os.Getenv(envVarAtlasPrivateKey)
+	projectID := os.Getenv(envVarAtlasProjectID)
+	connURL := os.Getenv(envVarAtlasConnURL)
 
 	connectionDetails := map[string]interface{}{
 		"public_key":  publicKey,
@@ -228,10 +237,10 @@ func TestAcceptanceDatabaseUser_DeleteUser(t *testing.T) {
 		t.SkipNow()
 	}
 
-	publicKey := os.Getenv("ATLAS_PUBLIC_KEY")
-	privateKey := os.Getenv("ATLAS_PRIVATE_KEY")
-	projectID := os.Getenv("ATLAS_PROJECT_ID")
-	connURL := os.Getenv("ATLAS_CONN_URL")
+	publicKey := os.Getenv(envVarAtlasPublicKey)
+	privateKey := os.Getenv(envVarAtlasPrivateKey)
+	projectID := os.Getenv(envVarAtlasProjectID)
+	connURL := os.Getenv(envVarAtlasConnURL)
 
 	connectionDetails := map[string]interface{}{
 		"public_key":  publicKey,
@@ -286,10 +295,10 @@ func TestAcceptanceDatabaseUser_UpdateUser_Password(t *testing.T) {
 		t.SkipNow()
 	}
 
-	publicKey := os.Getenv("ATLAS_PUBLIC_KEY")
-	privateKey := os.Getenv("ATLAS_PRIVATE_KEY")
-	projectID := os.Getenv("ATLAS_PROJECT_ID")
-	connURL := os.Getenv("ATLAS_CONN_URL")
+	publicKey := os.Getenv(envVarAtlasPublicKey)
+	privateKey := os.Getenv(envVarAtlasPrivateKey)
+	projectID := os.Getenv(envVarAtlasProjectID)
+	connURL := os.Getenv(envVarAtlasConnURL)
 
 	connectionDetails := map[string]interface{}{
 		"public_key":  publicKey,
@@ -308,7 +317,7 @@ func TestAcceptanceDatabaseUser_UpdateUser_Password(t *testing.T) {
 
 	// create the database user in advance, and test the connection
 	dbUser := "testmongouser"
-	startingPassword := "3>^chcBo7a7t-ZI"
+	startingPassword := "myreallysecurepassword"
 
 	createAtlasDBUser(t, projectID, publicKey, privateKey, dbUser, startingPassword)
 	defer deleteAtlasDBUser(t, projectID, publicKey, privateKey, dbUser)
@@ -346,12 +355,12 @@ func assertCredsExists(t testing.TB, projectID, publicKey, privateKey, username,
 
 	// Connect to the cluster to verify user password
 	mongoURI := fmt.Sprintf("mongodb+srv://%s", connURL)
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Minute)
 	defer cancel()
 
 	credential := options.Credential{
 		Username: username,
-		Password: password,
+		Password: url.QueryEscape(password),
 	}
 	clientOpts := options.Client().ApplyURI(mongoURI).SetAuth(credential)
 
@@ -361,7 +370,7 @@ func assertCredsExists(t testing.TB, projectID, publicKey, privateKey, username,
 	}
 	defer mClient.Disconnect(context.Background())
 
-	ticker := time.NewTicker(3 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	for {
