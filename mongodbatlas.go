@@ -193,11 +193,6 @@ func (m *MongoDBAtlas) getConnection(ctx context.Context) (*mongodbatlas.Client,
 	return client.(*mongodbatlas.Client), nil
 }
 
-// RotateRootCredentials is not currently supported on MongoDB
-func (m *MongoDBAtlas) RotateRootCredentials(ctx context.Context, statements []string) (map[string]interface{}, error) {
-	return nil, errors.New("root credential rotation is not currently implemented in this database secrets engine")
-}
-
 // Type returns the TypeName for this backend
 func (m *MongoDBAtlas) Type() (string, error) {
 	return mongoDBAtlasTypeName, nil
