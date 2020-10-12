@@ -5,45 +5,37 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"time"
 
 	"github.com/hashicorp/vault/api"
-	"github.com/hashicorp/vault/sdk/database/dbplugin"
 	"github.com/hashicorp/vault/sdk/database/helper/credsutil"
 	"github.com/hashicorp/vault/sdk/database/helper/dbutil"
+	"github.com/hashicorp/vault/sdk/database/newdbplugin"
+	"github.com/mitchellh/mapstructure"
 	"github.com/mongodb/go-client-mongodb-atlas/mongodbatlas"
 )
 
 const mongoDBAtlasTypeName = "mongodbatlas"
 
 // Verify interface is implemented
-var _ dbplugin.Database = &MongoDBAtlas{}
+var _ newdbplugin.Database = &MongoDBAtlas{}
 
 type MongoDBAtlas struct {
 	*mongoDBAtlasConnectionProducer
-	credsutil.CredentialsProducer
 }
 
 func New() (interface{}, error) {
 	db := new()
-	dbType := dbplugin.NewDatabaseErrorSanitizerMiddleware(db, db.secretValues)
+	dbType := newdbplugin.NewDatabaseErrorSanitizerMiddleware(db, db.secretValues)
 	return dbType, nil
 }
 
 func new() *MongoDBAtlas {
-	connProducer := &mongoDBAtlasConnectionProducer{}
-	connProducer.Type = mongoDBAtlasTypeName
-
-	credsProducer := &credsutil.SQLCredentialsProducer{
-		DisplayNameLen: credsutil.NoneLength,
-		RoleNameLen:    15,
-		UsernameLen:    20,
-		Separator:      "-",
+	connProducer := &mongoDBAtlasConnectionProducer{
+		Type: mongoDBAtlasTypeName,
 	}
 
 	return &MongoDBAtlas{
 		mongoDBAtlasConnectionProducer: connProducer,
-		CredentialsProducer:            credsProducer,
 	}
 }
 
@@ -54,42 +46,74 @@ func Run(apiTLSConfig *api.TLSConfig) error {
 		return err
 	}
 
-	dbplugin.Serve(dbType.(dbplugin.Database), api.VaultPluginTLSProvider(apiTLSConfig))
+	newdbplugin.Serve(dbType.(newdbplugin.Database), api.VaultPluginTLSProvider(apiTLSConfig))
 
 	return nil
 }
 
-func (m *MongoDBAtlas) CreateUser(ctx context.Context, statements dbplugin.Statements, usernameConfig dbplugin.UsernameConfig, expiration time.Time) (username string, password string, err error) {
+func (m *MongoDBAtlas) Initialize(ctx context.Context, req newdbplugin.InitializeRequest) (newdbplugin.InitializeResponse, error) {
+	m.Lock()
+	defer m.Unlock()
+
+	m.RawConfig = req.Config
+
+	err := mapstructure.WeakDecode(req.Config, m.mongoDBAtlasConnectionProducer)
+	if err != nil {
+		return newdbplugin.InitializeResponse{}, err
+	}
+
+	if len(m.PublicKey) == 0 {
+		return newdbplugin.InitializeResponse{}, errors.New("public Key is not set")
+	}
+
+	if len(m.PrivateKey) == 0 {
+		return newdbplugin.InitializeResponse{}, errors.New("private Key is not set")
+	}
+
+	// Set initialized to true at this point since all fields are set,
+	// and the connection can be established at a later time.
+	m.Initialized = true
+
+	resp := newdbplugin.InitializeResponse{
+		Config: req.Config,
+	}
+
+	return resp, nil
+}
+
+func (m *MongoDBAtlas) NewUser(ctx context.Context, req newdbplugin.NewUserRequest) (newdbplugin.NewUserResponse, error) {
 	// Grab the lock
 	m.Lock()
 	defer m.Unlock()
 
-	statements = dbutil.StatementCompatibilityHelper(statements)
-
-	if len(statements.Creation) == 0 {
-		return "", "", dbutil.ErrEmptyCreationStatement
+	// Statement length checks
+	if len(req.Statements.Commands) == 0 {
+		return newdbplugin.NewUserResponse{}, dbutil.ErrEmptyCreationStatement
+	}
+	if len(req.Statements.Commands) > 1 {
+		return newdbplugin.NewUserResponse{}, fmt.Errorf("only 1 creation statement supported for creation")
 	}
 
 	client, err := m.getConnection(ctx)
 	if err != nil {
-		return "", "", err
+		return newdbplugin.NewUserResponse{}, err
 	}
 
-	username, err = m.GenerateUsername(usernameConfig)
+	username, err := credsutil.GenerateUsername(
+		credsutil.DisplayName("", credsutil.NoneLength),
+		credsutil.RoleName(req.UsernameConfig.RoleName, 15),
+		credsutil.MaxLength(20),
+		credsutil.Separator("-"),
+	)
 	if err != nil {
-		return "", "", err
+		return newdbplugin.NewUserResponse{}, err
 	}
 
-	password, err = m.GeneratePassword()
-	if err != nil {
-		return "", "", err
-	}
-
-	// Unmarshal statements.CreationStatements into mongodbRoles
+	// Unmarshal creation statements into mongodb roles
 	var databaseUser mongoDBAtlasStatement
-	err = json.Unmarshal([]byte(statements.Creation[0]), &databaseUser)
+	err = json.Unmarshal([]byte(req.Statements.Commands[0]), &databaseUser)
 	if err != nil {
-		return "", "", fmt.Errorf("Error unmarshalling statement %s", err)
+		return newdbplugin.NewUserResponse{}, fmt.Errorf("error unmarshalling statement %s", err)
 	}
 
 	// Default to "admin" if no db provided
@@ -98,75 +122,66 @@ func (m *MongoDBAtlas) CreateUser(ctx context.Context, statements dbplugin.State
 	}
 
 	if len(databaseUser.Roles) == 0 {
-		return "", "", fmt.Errorf("roles array is required in creation statement")
+		return newdbplugin.NewUserResponse{}, fmt.Errorf("roles array is required in creation statement")
 	}
 
 	databaseUserRequest := &mongodbatlas.DatabaseUser{
 		Username:     username,
-		Password:     password,
+		Password:     req.Password,
 		DatabaseName: databaseUser.DatabaseName,
 		Roles:        databaseUser.Roles,
 	}
 
 	_, _, err = client.DatabaseUsers.Create(ctx, m.ProjectID, databaseUserRequest)
 	if err != nil {
-		return "", "", err
+		return newdbplugin.NewUserResponse{}, err
 	}
-	return username, password, nil
+
+	resp := newdbplugin.NewUserResponse{
+		Username: username,
+	}
+
+	return resp, nil
 }
 
-// RenewUser is not supported on MongoDB, so this is a no-op.
-func (m *MongoDBAtlas) RenewUser(ctx context.Context, statements dbplugin.Statements, username string, expiration time.Time) error {
-	// NOOP
-	return nil
+func (m *MongoDBAtlas) UpdateUser(ctx context.Context, req newdbplugin.UpdateUserRequest) (newdbplugin.UpdateUserResponse, error) {
+	if req.Password != nil {
+		err := m.changePassword(ctx, req.Username, req.Password.NewPassword)
+		return newdbplugin.UpdateUserResponse{}, err
+	}
+
+	// This also results in an no-op if the expiration is updated due to renewal.
+	return newdbplugin.UpdateUserResponse{}, nil
 }
 
-// RevokeUser drops the specified user from the authentication database. If none is provided
-// in the revocation statement, the default "admin" authentication database will be assumed.
-func (m *MongoDBAtlas) RevokeUser(ctx context.Context, statements dbplugin.Statements, username string) error {
+func (m *MongoDBAtlas) changePassword(ctx context.Context, username, password string) error {
 	m.Lock()
 	defer m.Unlock()
-
-	statements = dbutil.StatementCompatibilityHelper(statements)
 
 	client, err := m.getConnection(ctx)
 	if err != nil {
 		return err
 	}
 
-	_, err = client.DatabaseUsers.Delete(ctx, m.ProjectID, username)
-	return err
-}
-
-// SetCredentials uses provided information to set/create a user in the
-// database. Unlike CreateUser, this method requires a username be provided and
-// uses the name given, instead of generating a name. This is used for creating
-// and setting the password of static accounts, as well as rolling back
-// passwords in the database in the event an updated database fails to save in
-// Vault's storage.
-func (m *MongoDBAtlas) SetCredentials(ctx context.Context, statements dbplugin.Statements, staticUser dbplugin.StaticUserConfig) (username, password string, err error) {
-	// Grab the lock
-	m.Lock()
-	defer m.Unlock()
-
-	client, err := m.getConnection(ctx)
-	if err != nil {
-		return "", "", err
-	}
-
-	username = staticUser.Username
-	password = staticUser.Password
-
 	databaseUserRequest := &mongodbatlas.DatabaseUser{
 		Password: password,
 	}
 
 	_, _, err = client.DatabaseUsers.Update(context.Background(), m.ProjectID, username, databaseUserRequest)
+	return err
+}
+
+func (m *MongoDBAtlas) DeleteUser(ctx context.Context, req newdbplugin.DeleteUserRequest) (newdbplugin.DeleteUserResponse, error) {
+	m.Lock()
+	defer m.Unlock()
+
+	client, err := m.getConnection(ctx)
 	if err != nil {
-		return "", "", err
+		return newdbplugin.DeleteUserResponse{}, err
 	}
 
-	return username, password, nil
+	_, err = client.DatabaseUsers.Delete(ctx, m.ProjectID, req.Username)
+	return newdbplugin.DeleteUserResponse{}, err
 }
 
 func (m *MongoDBAtlas) getConnection(ctx context.Context) (*mongodbatlas.Client, error) {
@@ -176,11 +191,6 @@ func (m *MongoDBAtlas) getConnection(ctx context.Context) (*mongodbatlas.Client,
 	}
 
 	return client.(*mongodbatlas.Client), nil
-}
-
-// RotateRootCredentials is not currently supported on MongoDB
-func (m *MongoDBAtlas) RotateRootCredentials(ctx context.Context, statements []string) (map[string]interface{}, error) {
-	return nil, errors.New("root credential rotation is not currently implemented in this database secrets engine")
 }
 
 // Type returns the TypeName for this backend
