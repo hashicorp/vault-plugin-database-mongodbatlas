@@ -2,11 +2,12 @@ package mongodbatlas
 
 import (
 	"context"
+	"github.com/hashicorp/vault/sdk/helper/useragent"
 	"sync"
 
 	"github.com/Sectorbob/mlab-ns2/gae/ns/digest"
 	"github.com/hashicorp/vault/sdk/database/helper/connutil"
-	"github.com/mongodb/go-client-mongodb-atlas/mongodbatlas"
+	"go.mongodb.org/atlas/mongodbatlas"
 )
 
 type mongoDBAtlasConnectionProducer struct {
@@ -59,6 +60,7 @@ func (c *mongoDBAtlasConnectionProducer) Connection(_ context.Context) (interfac
 	if err != nil {
 		return nil, err
 	}
+	client.UserAgent = useragent.String()
 
 	c.client = client
 

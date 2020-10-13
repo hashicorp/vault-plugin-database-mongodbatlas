@@ -2,6 +2,7 @@ package mongodbatlas
 
 import (
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -16,13 +17,13 @@ import (
 	"github.com/Sectorbob/mlab-ns2/gae/ns/digest"
 	"github.com/hashicorp/vault/sdk/database/newdbplugin"
 	dbtesting "github.com/hashicorp/vault/sdk/database/newdbplugin/testing"
-	"github.com/mongodb/go-client-mongodb-atlas/mongodbatlas"
+	"go.mongodb.org/atlas/mongodbatlas"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 const (
-	testMongoDBAtlasRole = `{"roles": [{"databaseName":"admin","roleName":"readWriteAnyDatabase"}]}`
+	testMongoDBAtlasRole = `{"roles": [{"databaseName":"admin","roleName":"readWriteAnyDatabase"}], "scopes": [{"name": "vault-test-free-cluster", "type": "CLUSTER"}]}`
 
 	envVarAtlasPublicKey   = "ATLAS_PUBLIC_KEY"
 	envVarAtlasPrivateKey  = "ATLAS_PRIVATE_KEY"
@@ -186,8 +187,7 @@ func TestAcceptanceDatabaseUser_CreateUser(t *testing.T) {
 	createResp := dbtesting.AssertNewUser(t, db, createReq)
 	defer deleteAtlasDBUser(t, projectID, publicKey, privateKey, createResp.Username)
 
-	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL)
-
+	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL, testMongoDBAtlasRole)
 }
 
 func TestAcceptanceDatabaseUser_CreateUserWithSpecialChar(t *testing.T) {
@@ -231,7 +231,7 @@ func TestAcceptanceDatabaseUser_CreateUserWithSpecialChar(t *testing.T) {
 	createResp := dbtesting.AssertNewUser(t, db, createReq)
 	defer deleteAtlasDBUser(t, projectID, publicKey, privateKey, createResp.Username)
 
-	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL)
+	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL, testMongoDBAtlasRole)
 }
 
 func TestAcceptanceDatabaseUser_DeleteUser(t *testing.T) {
@@ -280,7 +280,7 @@ func TestAcceptanceDatabaseUser_DeleteUser(t *testing.T) {
 		}
 	}()
 
-	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL)
+	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL, testMongoDBAtlasRole)
 
 	// Test default revocation statement
 	delReq := newdbplugin.DeleteUserRequest{
@@ -324,7 +324,7 @@ func TestAcceptanceDatabaseUser_UpdateUser_Password(t *testing.T) {
 	createAtlasDBUser(t, projectID, publicKey, privateKey, dbUser, startingPassword)
 	defer deleteAtlasDBUser(t, projectID, publicKey, privateKey, dbUser)
 
-	assertCredsExists(t, projectID, publicKey, privateKey, dbUser, startingPassword, connURL)
+	assertCredsExists(t, projectID, publicKey, privateKey, dbUser, startingPassword, connURL, "")
 
 	newPassword := "some-other-password"
 
@@ -337,10 +337,10 @@ func TestAcceptanceDatabaseUser_UpdateUser_Password(t *testing.T) {
 
 	dbtesting.AssertUpdateUser(t, db, updateReq)
 
-	assertCredsExists(t, projectID, publicKey, privateKey, dbUser, newPassword, connURL)
+	assertCredsExists(t, projectID, publicKey, privateKey, dbUser, newPassword, connURL, "")
 }
 
-func assertCredsExists(t testing.TB, projectID, publicKey, privateKey, username, password, connURL string) {
+func assertCredsExists(t testing.TB, projectID, publicKey, privateKey, username, password, connURL, expectedRolesAndScopesJSON string) {
 	t.Helper()
 
 	t.Logf("Asserting username: %s", username)
@@ -350,9 +350,29 @@ func assertCredsExists(t testing.TB, projectID, publicKey, privateKey, username,
 		t.Fatalf("Failed to get an API client: %s", err)
 	}
 
-	_, _, err = client.DatabaseUsers.Get(context.Background(), projectID, username)
+	dbUser, _, err := client.DatabaseUsers.Get(context.Background(), "admin", projectID, username)
 	if err != nil {
 		t.Fatalf("Failed to retrieve user from from MongoDB Atlas: %s", err)
+	}
+	if expectedRolesAndScopesJSON != "" {
+		var expectedRolesAndScopes mongoDBAtlasStatement
+		err = json.Unmarshal([]byte(expectedRolesAndScopesJSON), &expectedRolesAndScopes)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal database user: %s", err)
+		}
+		if len(dbUser.Roles) != len(expectedRolesAndScopes.Roles) || len(dbUser.Scopes) != len(expectedRolesAndScopes.Scopes) {
+			t.Fatalf("Mismatch in roles or scopes, expected %+v but got %+v", expectedRolesAndScopes, dbUser)
+		}
+		for i := range dbUser.Roles {
+			if dbUser.Roles[i] != expectedRolesAndScopes.Roles[i] {
+				t.Fatalf("Mismatch in roles, expected %+v but got %+v", expectedRolesAndScopes.Roles[i], dbUser.Roles[i])
+			}
+		}
+		for i := range dbUser.Scopes {
+			if dbUser.Scopes[i] != expectedRolesAndScopes.Scopes[i] {
+				t.Fatalf("Mismatch in scopes, expected %+v but got %+v", expectedRolesAndScopes.Scopes[i], dbUser.Scopes[i])
+			}
+		}
 	}
 
 	// Connect to the cluster to verify user password
@@ -396,7 +416,7 @@ func assertCredsDoNotExist(t testing.TB, projectID, publicKey, privateKey, usern
 		t.Fatalf("Error creating client: %s", err)
 	}
 
-	dbUser, _, err := client.DatabaseUsers.Get(context.Background(), projectID, username)
+	dbUser, _, err := client.DatabaseUsers.Get(context.Background(), "admin", projectID, username)
 	if err == nil && dbUser != nil {
 		t.Fatal("Expected user to not exist")
 	}
@@ -437,7 +457,7 @@ func deleteAtlasDBUser(t testing.TB, projectID, publicKey, privateKey, username 
 		t.Fatalf("Error creating client: %s", err)
 	}
 
-	_, err = client.DatabaseUsers.Delete(context.Background(), projectID, username)
+	_, err = client.DatabaseUsers.Delete(context.Background(), "admin", projectID, username)
 	if err != nil {
 		t.Fatalf("Error deleting database user: %s", err)
 	}

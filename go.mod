@@ -8,6 +8,6 @@ require (
 	github.com/hashicorp/vault/sdk v0.1.14-0.20201001203959-0ff44e5a3c48
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
 	github.com/mitchellh/mapstructure v1.3.2
-	github.com/mongodb/go-client-mongodb-atlas v0.1.2
+	go.mongodb.org/atlas v0.5.0
 	go.mongodb.org/mongo-driver v1.4.2
 )
