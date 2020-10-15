@@ -17,7 +17,7 @@ import (
 const mongoDBAtlasTypeName = "mongodbatlas"
 
 // Verify interface is implemented
-var _ dbplugin.Database = &MongoDBAtlas{}
+var _ dbplugin.Database = (*MongoDBAtlas)(nil)
 
 type MongoDBAtlas struct {
 	*mongoDBAtlasConnectionProducer
