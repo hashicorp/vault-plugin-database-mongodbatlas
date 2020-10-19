@@ -2,11 +2,11 @@ package mongodbatlas
 
 import (
 	"context"
-	"github.com/hashicorp/vault/sdk/helper/useragent"
 	"sync"
 
 	"github.com/Sectorbob/mlab-ns2/gae/ns/digest"
 	"github.com/hashicorp/vault/sdk/database/helper/connutil"
+	"github.com/hashicorp/vault/sdk/helper/useragent"
 	"go.mongodb.org/atlas/mongodbatlas"
 )
 

@@ -6,13 +6,12 @@ import (
 	"errors"
 	"fmt"
 
-	"go.mongodb.org/atlas/mongodbatlas"
-
 	"github.com/hashicorp/vault/api"
 	"github.com/hashicorp/vault/sdk/database/helper/credsutil"
 	"github.com/hashicorp/vault/sdk/database/helper/dbutil"
 	"github.com/hashicorp/vault/sdk/database/newdbplugin"
 	"github.com/mitchellh/mapstructure"
+	"go.mongodb.org/atlas/mongodbatlas"
 )
 
 const mongoDBAtlasTypeName = "mongodbatlas"
@@ -186,7 +185,7 @@ func (m *MongoDBAtlas) DeleteUser(ctx context.Context, req newdbplugin.DeleteUse
 	if len(req.Statements.Commands) > 0 {
 		err = json.Unmarshal([]byte(req.Statements.Commands[0]), &databaseUser)
 		if err != nil {
-			return newdbplugin.DeleteUserResponse{}, fmt.Errorf("error unmarshalling statement %s", err)
+			return newdbplugin.DeleteUserResponse{}, fmt.Errorf("error unmarshalling statement %w", err)
 		}
 	}
 
