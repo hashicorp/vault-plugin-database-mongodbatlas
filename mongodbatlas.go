@@ -7,9 +7,9 @@ import (
 	"fmt"
 
 	"github.com/hashicorp/vault/api"
+	dbplugin "github.com/hashicorp/vault/sdk/database/dbplugin/v5"
 	"github.com/hashicorp/vault/sdk/database/helper/credsutil"
 	"github.com/hashicorp/vault/sdk/database/helper/dbutil"
-	"github.com/hashicorp/vault/sdk/database/newdbplugin"
 	"github.com/mitchellh/mapstructure"
 	"go.mongodb.org/atlas/mongodbatlas"
 )
@@ -17,7 +17,7 @@ import (
 const mongoDBAtlasTypeName = "mongodbatlas"
 
 // Verify interface is implemented
-var _ newdbplugin.Database = &MongoDBAtlas{}
+var _ dbplugin.Database = (*MongoDBAtlas)(nil)
 
 type MongoDBAtlas struct {
 	*mongoDBAtlasConnectionProducer
@@ -25,7 +25,7 @@ type MongoDBAtlas struct {
 
 func New() (interface{}, error) {
 	db := new()
-	dbType := newdbplugin.NewDatabaseErrorSanitizerMiddleware(db, db.secretValues)
+	dbType := dbplugin.NewDatabaseErrorSanitizerMiddleware(db, db.secretValues)
 	return dbType, nil
 }
 
@@ -46,12 +46,12 @@ func Run(apiTLSConfig *api.TLSConfig) error {
 		return err
 	}
 
-	newdbplugin.Serve(dbType.(newdbplugin.Database), api.VaultPluginTLSProvider(apiTLSConfig))
+	dbplugin.Serve(dbType.(dbplugin.Database), api.VaultPluginTLSProvider(apiTLSConfig))
 
 	return nil
 }
 
-func (m *MongoDBAtlas) Initialize(ctx context.Context, req newdbplugin.InitializeRequest) (newdbplugin.InitializeResponse, error) {
+func (m *MongoDBAtlas) Initialize(ctx context.Context, req dbplugin.InitializeRequest) (dbplugin.InitializeResponse, error) {
 	m.Lock()
 	defer m.Unlock()
 
@@ -59,44 +59,44 @@ func (m *MongoDBAtlas) Initialize(ctx context.Context, req newdbplugin.Initializ
 
 	err := mapstructure.WeakDecode(req.Config, m.mongoDBAtlasConnectionProducer)
 	if err != nil {
-		return newdbplugin.InitializeResponse{}, err
+		return dbplugin.InitializeResponse{}, err
 	}
 
 	if len(m.PublicKey) == 0 {
-		return newdbplugin.InitializeResponse{}, errors.New("public Key is not set")
+		return dbplugin.InitializeResponse{}, errors.New("public Key is not set")
 	}
 
 	if len(m.PrivateKey) == 0 {
-		return newdbplugin.InitializeResponse{}, errors.New("private Key is not set")
+		return dbplugin.InitializeResponse{}, errors.New("private Key is not set")
 	}
 
 	// Set initialized to true at this point since all fields are set,
 	// and the connection can be established at a later time.
 	m.Initialized = true
 
-	resp := newdbplugin.InitializeResponse{
+	resp := dbplugin.InitializeResponse{
 		Config: req.Config,
 	}
 
 	return resp, nil
 }
 
-func (m *MongoDBAtlas) NewUser(ctx context.Context, req newdbplugin.NewUserRequest) (newdbplugin.NewUserResponse, error) {
+func (m *MongoDBAtlas) NewUser(ctx context.Context, req dbplugin.NewUserRequest) (dbplugin.NewUserResponse, error) {
 	// Grab the lock
 	m.Lock()
 	defer m.Unlock()
 
 	// Statement length checks
 	if len(req.Statements.Commands) == 0 {
-		return newdbplugin.NewUserResponse{}, dbutil.ErrEmptyCreationStatement
+		return dbplugin.NewUserResponse{}, dbutil.ErrEmptyCreationStatement
 	}
 	if len(req.Statements.Commands) > 1 {
-		return newdbplugin.NewUserResponse{}, fmt.Errorf("only 1 creation statement supported for creation")
+		return dbplugin.NewUserResponse{}, fmt.Errorf("only 1 creation statement supported for creation")
 	}
 
 	client, err := m.getConnection(ctx)
 	if err != nil {
-		return newdbplugin.NewUserResponse{}, err
+		return dbplugin.NewUserResponse{}, err
 	}
 
 	username, err := credsutil.GenerateUsername(
@@ -106,14 +106,14 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req newdbplugin.NewUserReque
 		credsutil.Separator("-"),
 	)
 	if err != nil {
-		return newdbplugin.NewUserResponse{}, err
+		return dbplugin.NewUserResponse{}, err
 	}
 
 	// Unmarshal creation statements into mongodb roles
 	var databaseUser mongoDBAtlasStatement
 	err = json.Unmarshal([]byte(req.Statements.Commands[0]), &databaseUser)
 	if err != nil {
-		return newdbplugin.NewUserResponse{}, fmt.Errorf("error unmarshalling statement %s", err)
+		return dbplugin.NewUserResponse{}, fmt.Errorf("error unmarshalling statement %s", err)
 	}
 
 	// Default to "admin" if no db provided
@@ -122,7 +122,7 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req newdbplugin.NewUserReque
 	}
 
 	if len(databaseUser.Roles) == 0 {
-		return newdbplugin.NewUserResponse{}, fmt.Errorf("roles array is required in creation statement")
+		return dbplugin.NewUserResponse{}, fmt.Errorf("roles array is required in creation statement")
 	}
 
 	databaseUserRequest := &mongodbatlas.DatabaseUser{
@@ -135,24 +135,24 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req newdbplugin.NewUserReque
 
 	_, _, err = client.DatabaseUsers.Create(ctx, m.ProjectID, databaseUserRequest)
 	if err != nil {
-		return newdbplugin.NewUserResponse{}, err
+		return dbplugin.NewUserResponse{}, err
 	}
 
-	resp := newdbplugin.NewUserResponse{
+	resp := dbplugin.NewUserResponse{
 		Username: username,
 	}
 
 	return resp, nil
 }
 
-func (m *MongoDBAtlas) UpdateUser(ctx context.Context, req newdbplugin.UpdateUserRequest) (newdbplugin.UpdateUserResponse, error) {
+func (m *MongoDBAtlas) UpdateUser(ctx context.Context, req dbplugin.UpdateUserRequest) (dbplugin.UpdateUserResponse, error) {
 	if req.Password != nil {
 		err := m.changePassword(ctx, req.Username, req.Password.NewPassword)
-		return newdbplugin.UpdateUserResponse{}, err
+		return dbplugin.UpdateUserResponse{}, err
 	}
 
 	// This also results in an no-op if the expiration is updated due to renewal.
-	return newdbplugin.UpdateUserResponse{}, nil
+	return dbplugin.UpdateUserResponse{}, nil
 }
 
 func (m *MongoDBAtlas) changePassword(ctx context.Context, username, password string) error {
@@ -172,13 +172,13 @@ func (m *MongoDBAtlas) changePassword(ctx context.Context, username, password st
 	return err
 }
 
-func (m *MongoDBAtlas) DeleteUser(ctx context.Context, req newdbplugin.DeleteUserRequest) (newdbplugin.DeleteUserResponse, error) {
+func (m *MongoDBAtlas) DeleteUser(ctx context.Context, req dbplugin.DeleteUserRequest) (dbplugin.DeleteUserResponse, error) {
 	m.Lock()
 	defer m.Unlock()
 
 	client, err := m.getConnection(ctx)
 	if err != nil {
-		return newdbplugin.DeleteUserResponse{}, err
+		return dbplugin.DeleteUserResponse{}, err
 	}
 
 	var databaseUser mongoDBAtlasStatement
@@ -195,7 +195,7 @@ func (m *MongoDBAtlas) DeleteUser(ctx context.Context, req newdbplugin.DeleteUse
 	}
 
 	_, err = client.DatabaseUsers.Delete(ctx, databaseUser.DatabaseName, m.ProjectID, req.Username)
-	return newdbplugin.DeleteUserResponse{}, err
+	return dbplugin.DeleteUserResponse{}, err
 }
 
 func (m *MongoDBAtlas) getConnection(ctx context.Context) (*mongodbatlas.Client, error) {

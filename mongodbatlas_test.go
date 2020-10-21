@@ -15,8 +15,8 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
 	"github.com/Sectorbob/mlab-ns2/gae/ns/digest"
-	"github.com/hashicorp/vault/sdk/database/newdbplugin"
-	dbtesting "github.com/hashicorp/vault/sdk/database/newdbplugin/testing"
+	dbplugin "github.com/hashicorp/vault/sdk/database/dbplugin/v5"
+	dbtesting "github.com/hashicorp/vault/sdk/database/dbplugin/v5/testing"
 	"go.mongodb.org/atlas/mongodbatlas"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -125,7 +125,7 @@ func TestIntegrationDatabaseUser_Initialize(t *testing.T) {
 	db := new()
 	defer dbtesting.AssertClose(t, db)
 
-	req := newdbplugin.InitializeRequest{
+	req := dbplugin.InitializeRequest{
 		Config:           connectionDetails,
 		VerifyConnection: true,
 	}
@@ -165,19 +165,19 @@ func TestAcceptanceDatabaseUser_CreateUser(t *testing.T) {
 	db := new()
 	defer dbtesting.AssertClose(t, db)
 
-	initReq := newdbplugin.InitializeRequest{
+	initReq := dbplugin.InitializeRequest{
 		Config: connectionDetails,
 	}
 
 	dbtesting.AssertInitialize(t, db, initReq)
 
 	password := "myreallysecurepassword"
-	createReq := newdbplugin.NewUserRequest{
-		UsernameConfig: newdbplugin.UsernameMetadata{
+	createReq := dbplugin.NewUserRequest{
+		UsernameConfig: dbplugin.UsernameMetadata{
 			DisplayName: "testcreate",
 			RoleName:    "test",
 		},
-		Statements: newdbplugin.Statements{
+		Statements: dbplugin.Statements{
 			Commands: []string{testMongoDBAtlasRole},
 		},
 		Password:   password,
@@ -209,19 +209,19 @@ func TestAcceptanceDatabaseUser_CreateUserWithSpecialChar(t *testing.T) {
 	db := new()
 	defer dbtesting.AssertClose(t, db)
 
-	initReq := newdbplugin.InitializeRequest{
+	initReq := dbplugin.InitializeRequest{
 		Config: connectionDetails,
 	}
 
 	dbtesting.AssertInitialize(t, db, initReq)
 
 	password := "myreallysecurepassword"
-	createReq := newdbplugin.NewUserRequest{
-		UsernameConfig: newdbplugin.UsernameMetadata{
+	createReq := dbplugin.NewUserRequest{
+		UsernameConfig: dbplugin.UsernameMetadata{
 			DisplayName: "test.special",
 			RoleName:    "test",
 		},
-		Statements: newdbplugin.Statements{
+		Statements: dbplugin.Statements{
 			Commands: []string{testMongoDBAtlasRole},
 		},
 		Password:   password,
@@ -253,19 +253,19 @@ func TestAcceptanceDatabaseUser_DeleteUser(t *testing.T) {
 	db := new()
 	defer dbtesting.AssertClose(t, db)
 
-	initReq := newdbplugin.InitializeRequest{
+	initReq := dbplugin.InitializeRequest{
 		Config: connectionDetails,
 	}
 
 	dbtesting.AssertInitialize(t, db, initReq)
 
 	password := "myreallysecurepassword"
-	createReq := newdbplugin.NewUserRequest{
-		UsernameConfig: newdbplugin.UsernameMetadata{
+	createReq := dbplugin.NewUserRequest{
+		UsernameConfig: dbplugin.UsernameMetadata{
 			DisplayName: "testdelete",
 			RoleName:    "test",
 		},
-		Statements: newdbplugin.Statements{
+		Statements: dbplugin.Statements{
 			Commands: []string{testMongoDBAtlasRole},
 		},
 		Password:   password,
@@ -283,7 +283,7 @@ func TestAcceptanceDatabaseUser_DeleteUser(t *testing.T) {
 	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL, testMongoDBAtlasRole)
 
 	// Test default revocation statement
-	delReq := newdbplugin.DeleteUserRequest{
+	delReq := dbplugin.DeleteUserRequest{
 		Username: createResp.Username,
 	}
 
@@ -311,7 +311,7 @@ func TestAcceptanceDatabaseUser_UpdateUser_Password(t *testing.T) {
 	db := new()
 	defer dbtesting.AssertClose(t, db)
 
-	initReq := newdbplugin.InitializeRequest{
+	initReq := dbplugin.InitializeRequest{
 		Config: connectionDetails,
 	}
 
@@ -328,9 +328,9 @@ func TestAcceptanceDatabaseUser_UpdateUser_Password(t *testing.T) {
 
 	newPassword := "some-other-password"
 
-	updateReq := newdbplugin.UpdateUserRequest{
+	updateReq := dbplugin.UpdateUserRequest{
 		Username: dbUser,
-		Password: &newdbplugin.ChangePassword{
+		Password: &dbplugin.ChangePassword{
 			NewPassword: newPassword,
 		},
 	}
