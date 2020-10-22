@@ -4,7 +4,6 @@ go 1.12
 
 require (
 	github.com/Sectorbob/mlab-ns2 v0.0.0-20171030222938-d3aa0c295a8a
-	github.com/hashicorp/vault/api v1.0.5-0.20200519221902-385fac77e20f // indirect
 	github.com/hashicorp/vault/sdk v0.1.14-0.20201022214319-d87657199d4b
 	github.com/hashicorp/yamux v0.0.0-20181012175058-2f1d1f20f75d // indirect
 	github.com/mitchellh/mapstructure v1.3.2
