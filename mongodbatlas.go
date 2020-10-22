@@ -185,7 +185,7 @@ func (m *MongoDBAtlas) DeleteUser(ctx context.Context, req dbplugin.DeleteUserRe
 	if len(req.Statements.Commands) > 0 {
 		err = json.Unmarshal([]byte(req.Statements.Commands[0]), &databaseUser)
 		if err != nil {
-			return newdbplugin.DeleteUserResponse{}, fmt.Errorf("error unmarshalling statement %w", err)
+			return dbplugin.DeleteUserResponse{}, fmt.Errorf("error unmarshalling statement %w", err)
 		}
 	}
 
