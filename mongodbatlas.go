@@ -11,7 +11,7 @@ import (
 	"github.com/hashicorp/vault/sdk/database/helper/credsutil"
 	"github.com/hashicorp/vault/sdk/database/helper/dbutil"
 	"github.com/mitchellh/mapstructure"
-	"github.com/mongodb/go-client-mongodb-atlas/mongodbatlas"
+	"go.mongodb.org/atlas/mongodbatlas"
 )
 
 const mongoDBAtlasTypeName = "mongodbatlas"
@@ -130,6 +130,7 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req dbplugin.NewUserRequest)
 		Password:     req.Password,
 		DatabaseName: databaseUser.DatabaseName,
 		Roles:        databaseUser.Roles,
+		Scopes:       databaseUser.Scopes,
 	}
 
 	_, _, err = client.DatabaseUsers.Create(ctx, m.ProjectID, databaseUserRequest)
@@ -180,7 +181,20 @@ func (m *MongoDBAtlas) DeleteUser(ctx context.Context, req dbplugin.DeleteUserRe
 		return dbplugin.DeleteUserResponse{}, err
 	}
 
-	_, err = client.DatabaseUsers.Delete(ctx, m.ProjectID, req.Username)
+	var databaseUser mongoDBAtlasStatement
+	if len(req.Statements.Commands) > 0 {
+		err = json.Unmarshal([]byte(req.Statements.Commands[0]), &databaseUser)
+		if err != nil {
+			return dbplugin.DeleteUserResponse{}, fmt.Errorf("error unmarshalling statement %w", err)
+		}
+	}
+
+	// Default to "admin" if no db provided
+	if databaseUser.DatabaseName == "" {
+		databaseUser.DatabaseName = "admin"
+	}
+
+	_, err = client.DatabaseUsers.Delete(ctx, databaseUser.DatabaseName, m.ProjectID, req.Username)
 	return dbplugin.DeleteUserResponse{}, err
 }
 
@@ -199,6 +213,7 @@ func (m *MongoDBAtlas) Type() (string, error) {
 }
 
 type mongoDBAtlasStatement struct {
-	DatabaseName string              `json:"database_name"`
-	Roles        []mongodbatlas.Role `json:"roles,omitempty"`
+	DatabaseName string               `json:"database_name"`
+	Roles        []mongodbatlas.Role  `json:"roles,omitempty"`
+	Scopes       []mongodbatlas.Scope `json:"scopes,omitempty"`
 }
