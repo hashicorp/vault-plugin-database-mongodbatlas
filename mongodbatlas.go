@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/hashicorp/vault/api"
 	dbplugin "github.com/hashicorp/vault/sdk/database/dbplugin/v5"
 	"github.com/hashicorp/vault/sdk/database/helper/credsutil"
 	"github.com/hashicorp/vault/sdk/database/helper/dbutil"
@@ -37,18 +36,6 @@ func new() *MongoDBAtlas {
 	return &MongoDBAtlas{
 		mongoDBAtlasConnectionProducer: connProducer,
 	}
-}
-
-// Run instantiates a MongoDBAtlas object, and runs the RPC server for the plugin
-func Run(apiTLSConfig *api.TLSConfig) error {
-	dbType, err := New()
-	if err != nil {
-		return err
-	}
-
-	dbplugin.Serve(dbType.(dbplugin.Database), api.VaultPluginTLSProvider(apiTLSConfig))
-
-	return nil
 }
 
 func (m *MongoDBAtlas) Initialize(ctx context.Context, req dbplugin.InitializeRequest) (dbplugin.InitializeResponse, error) {
