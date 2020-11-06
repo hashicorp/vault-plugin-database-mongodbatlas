@@ -2,7 +2,9 @@
 
 MongoDB Atlas is one of the supported plugins for the HashiCorp Vault Database Secrets Engine and allows for the programmatic generation of unique, ephemeral MongoDB [Database User](https://docs.atlas.mongodb.com/reference/api/database-users/) credentials in MongoDB Atlas Projects.
 
-**The plugin is included in version 1.4 of Vault.**
+**The plugin is included from version 1.4 of Vault.**
+
+**Please note:** If you would like to install a different version of this plugin to that which is bundled with Vault, versions v0.2.0 onwards of this plugin are incompatible with Vault versions before 1.6.0 due to an update of the database plugin interface.
 
 ## Support, Bugs and Feature Requests
 Support for the HashiCorp Vault Database Secrets Engine - MongoDB Atlas is provided under MongoDB Atlas support plans. Please submit support questions within the Atlas UI.  Vault support is via HashiCorp.
