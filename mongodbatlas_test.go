@@ -76,7 +76,7 @@ func newTestController() (testController, error) {
 	privateKey := os.Getenv(envVarAtlasPrivateKey)
 	projectID := os.Getenv(envVarAtlasProjectID)
 
-	// This is the public IP of your machine so that it gets whitelisted
+	// This is the public IP of your machine so that it gets allow listed
 	// for the project during the test run
 	ip := os.Getenv(envVarAtlasAllowListIP)
 
@@ -99,12 +99,12 @@ func (c testController) Setup() error {
 		return nil
 	}
 
-	allowList := []*mongodbatlas.ProjectIPWhitelist{
+	allowList := []*mongodbatlas.ProjectIPAccessList{
 		{
 			IPAddress: c.ip,
 		},
 	}
-	_, _, err := c.client.ProjectIPWhitelist.Create(context.Background(), c.projectID, allowList)
+	_, _, err := c.client.ProjectIPAccessList.Create(context.Background(), c.projectID, allowList)
 	return err
 }
 
@@ -113,7 +113,7 @@ func (c testController) Teardown() error {
 		return nil
 	}
 
-	_, err := c.client.ProjectIPWhitelist.Delete(context.Background(), c.projectID, c.ip)
+	_, err := c.client.ProjectIPAccessList.Delete(context.Background(), c.projectID, c.ip)
 	return err
 }
 
