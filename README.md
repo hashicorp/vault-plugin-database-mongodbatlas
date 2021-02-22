@@ -35,7 +35,7 @@ variable `VAULT_ACC=1` as well as provide all of the necessary information to
 connect to a MongoDB Atlas Project. All `ATLAS_*` environment variables must be
 provided in order for the acceptance tests to run properly. A cluster must be
 available during the test. A
-[free tier cluster](https://docs.atlas.mongodb.com/tutorial/deploy-free-tier-cluster/).
+[free tier cluster](https://docs.atlas.mongodb.com/tutorial/deploy-free-tier-cluster/)
 can be provisioned manually to test.
 
 | Environment variable | Description                                                   |
