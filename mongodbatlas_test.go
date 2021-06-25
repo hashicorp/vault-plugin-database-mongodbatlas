@@ -200,13 +200,11 @@ func TestAcceptanceDatabaseUser_CreateUserWithTemplate(t *testing.T) {
 	projectID := os.Getenv(envVarAtlasProjectID)
 	connURL := os.Getenv(envVarAtlasConnURL)
 
-	sep := "_"
-	usernameTemplate := "begin" + sep + "{{.RoleName}}" + sep + "end"
 	connectionDetails := map[string]interface{}{
 		"public_key":        publicKey,
 		"private_key":       privateKey,
 		"project_id":        projectID,
-		"username_template": usernameTemplate,
+		"username_template": "begin_{{.RoleName}}_end",
 	}
 
 	db := new()
@@ -236,7 +234,7 @@ func TestAcceptanceDatabaseUser_CreateUserWithTemplate(t *testing.T) {
 	defer deleteAtlasDBUser(t, projectID, publicKey, privateKey, createResp.Username)
 
 	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL, testMongoDBAtlasRole)
-	expectedUsername := "begin" + sep + roleName + sep + "end"
+	expectedUsername := "begin_" + roleName + "_end"
 	assertUsernameTemplate(t, createResp.Username, expectedUsername)
 }
 
