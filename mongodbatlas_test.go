@@ -9,7 +9,6 @@ import (
 	"net/url"
 	"os"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
@@ -18,6 +17,7 @@ import (
 	"github.com/Sectorbob/mlab-ns2/gae/ns/digest"
 	dbplugin "github.com/hashicorp/vault/sdk/database/dbplugin/v5"
 	dbtesting "github.com/hashicorp/vault/sdk/database/dbplugin/v5/testing"
+	"github.com/stretchr/testify/require"
 	"go.mongodb.org/atlas/mongodbatlas"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -238,10 +238,8 @@ func TestAcceptanceDatabaseUser_CreateUserDefaultTemplate(t *testing.T) {
 		t.Fatalf("Username did not match template, username: %s, defaultUserNameTemplate: %s", createResp.Username, defaultUserNameTemplate)
 	}
 
-	expectedUsernamePrefix := "v-" + roleName + "-"
-	if !strings.HasPrefix(createResp.Username, expectedUsernamePrefix) {
-		t.Fatalf("Username did not match template, username: %s, defaultUserNameTemplate: %s", createResp.Username, defaultUserNameTemplate)
-	}
+	expectedUsernameRegex := `^v-test-[a-zA-Z0-9]{13}$`
+	require.Regexp(t, expectedUsernameRegex, createResp.Username)
 }
 
 func TestAcceptanceDatabaseUser_CreateUserWithTemplate(t *testing.T) {
