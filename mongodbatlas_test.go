@@ -17,6 +17,7 @@ import (
 	"github.com/Sectorbob/mlab-ns2/gae/ns/digest"
 	dbplugin "github.com/hashicorp/vault/sdk/database/dbplugin/v5"
 	dbtesting "github.com/hashicorp/vault/sdk/database/dbplugin/v5/testing"
+	"github.com/stretchr/testify/require"
 	"go.mongodb.org/atlas/mongodbatlas"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -188,6 +189,108 @@ func TestAcceptanceDatabaseUser_CreateUser(t *testing.T) {
 	defer deleteAtlasDBUser(t, projectID, publicKey, privateKey, createResp.Username)
 
 	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL, testMongoDBAtlasRole)
+}
+
+func TestAcceptanceDatabaseUser_CreateUserDefaultTemplate(t *testing.T) {
+	if !runAcceptanceTests {
+		t.SkipNow()
+	}
+
+	publicKey := os.Getenv(envVarAtlasPublicKey)
+	privateKey := os.Getenv(envVarAtlasPrivateKey)
+	projectID := os.Getenv(envVarAtlasProjectID)
+	connURL := os.Getenv(envVarAtlasConnURL)
+
+	connectionDetails := map[string]interface{}{
+		"public_key":  publicKey,
+		"private_key": privateKey,
+		"project_id":  projectID,
+	}
+
+	db := new()
+	defer dbtesting.AssertClose(t, db)
+
+	initReq := dbplugin.InitializeRequest{
+		Config: connectionDetails,
+	}
+
+	dbtesting.AssertInitialize(t, db, initReq)
+
+	password := "myreallysecurepassword"
+	roleName := "test"
+	createReq := dbplugin.NewUserRequest{
+		UsernameConfig: dbplugin.UsernameMetadata{
+			DisplayName: "testcreate",
+			RoleName:    roleName,
+		},
+		Statements: dbplugin.Statements{
+			Commands: []string{testMongoDBAtlasRole},
+		},
+		Password:   password,
+		Expiration: time.Now().Add(time.Minute),
+	}
+
+	createResp := dbtesting.AssertNewUser(t, db, createReq)
+	defer deleteAtlasDBUser(t, projectID, publicKey, privateKey, createResp.Username)
+
+	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL, testMongoDBAtlasRole)
+	if len(createResp.Username) != 20 {
+		t.Fatalf("Username did not match template, username: %s, defaultUserNameTemplate: %s", createResp.Username, defaultUserNameTemplate)
+	}
+
+	expectedUsernameRegex := `^v-test-[a-zA-Z0-9]{13}$`
+	require.Regexp(t, expectedUsernameRegex, createResp.Username)
+}
+
+func TestAcceptanceDatabaseUser_CreateUserWithTemplate(t *testing.T) {
+	if !runAcceptanceTests {
+		t.SkipNow()
+	}
+
+	publicKey := os.Getenv(envVarAtlasPublicKey)
+	privateKey := os.Getenv(envVarAtlasPrivateKey)
+	projectID := os.Getenv(envVarAtlasProjectID)
+	connURL := os.Getenv(envVarAtlasConnURL)
+
+	connectionDetails := map[string]interface{}{
+		"public_key":        publicKey,
+		"private_key":       privateKey,
+		"project_id":        projectID,
+		"username_template": "begin_{{.RoleName}}_end",
+	}
+
+	db := new()
+	defer dbtesting.AssertClose(t, db)
+
+	initReq := dbplugin.InitializeRequest{
+		Config: connectionDetails,
+	}
+
+	dbtesting.AssertInitialize(t, db, initReq)
+
+	password := "myreallysecurepassword"
+	roleName := "test"
+	createReq := dbplugin.NewUserRequest{
+		UsernameConfig: dbplugin.UsernameMetadata{
+			DisplayName: "testcreate",
+			RoleName:    roleName,
+		},
+		Statements: dbplugin.Statements{
+			Commands: []string{testMongoDBAtlasRole},
+		},
+		Password:   password,
+		Expiration: time.Now().Add(time.Minute),
+	}
+
+	createResp := dbtesting.AssertNewUser(t, db, createReq)
+	defer deleteAtlasDBUser(t, projectID, publicKey, privateKey, createResp.Username)
+
+	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL, testMongoDBAtlasRole)
+
+	expectedUsername := "begin_" + roleName + "_end"
+	if createResp.Username != expectedUsername {
+		t.Fatalf("Username did not match template, username: %s, expectedUsername: %s", createResp.Username, expectedUsername)
+	}
 }
 
 func TestAcceptanceDatabaseUser_CreateUserWithSpecialChar(t *testing.T) {
