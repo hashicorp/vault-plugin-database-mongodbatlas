@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sync"
 
+	backoff "github.com/cenkalti/backoff/v4"
 	"github.com/hashicorp/go-secure-stdlib/strutil"
 	dbplugin "github.com/hashicorp/vault/sdk/database/dbplugin/v5"
 	"github.com/hashicorp/vault/sdk/database/helper/dbutil"
@@ -124,6 +126,57 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req dbplugin.NewUserRequest)
 	_, _, err = client.DatabaseUsers.Create(ctx, m.ProjectID, databaseUserRequest)
 	if err != nil {
 		return dbplugin.NewUserResponse{}, err
+	}
+
+	clusters, _, err := client.Clusters.List(ctx, m.ProjectID, &mongodbatlas.ListOptions{})
+	if err != nil {
+		return dbplugin.NewUserResponse{}, fmt.Errorf("roles array is required in creation statement")
+	}
+
+	clusterList := []string{}
+	for _, c := range clusters {
+		clusterList = append(clusterList, c.Name)
+	}
+
+	var wg sync.WaitGroup
+	result := make(chan error, 10)
+	fmt.Printf("No. of clusters %d\n", len(clusterList))
+	wg.Add(len(clusterList))
+
+	for _, c := range clusterList {
+
+		go func(clustername string) {
+
+			operation := func() error {
+
+				status, _, err := client.Clusters.Status(context.Background(), m.ProjectID, clustername)
+				if err != nil {
+					return err
+				}
+				if status.ChangeStatus != mongodbatlas.ChangeStatusApplied {
+					return fmt.Errorf("status: %s", status.ChangeStatus)
+				}
+
+				return nil
+			}
+
+			err := backoff.Retry(operation, backoff.NewExponentialBackOff())
+			result <- err
+			wg.Done()
+		}(c)
+	}
+	wg.Wait()
+	close(result)
+
+	err = nil
+	for r := range result {
+		if err != nil {
+			err = fmt.Errorf("%s, %s", err, r)
+		}
+	}
+
+	if err != nil {
+		return dbplugin.NewUserResponse{}, fmt.Errorf("username could not be applied: %s", err)
 	}
 
 	resp := dbplugin.NewUserResponse{
