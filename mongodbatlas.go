@@ -140,7 +140,6 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req dbplugin.NewUserRequest)
 
 	var wg sync.WaitGroup
 	result := make(chan error, 10)
-	fmt.Printf("No. of clusters %d\n", len(clusterList))
 	wg.Add(len(clusterList))
 
 	for _, c := range clusterList {
