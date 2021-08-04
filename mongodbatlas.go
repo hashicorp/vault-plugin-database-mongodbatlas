@@ -3,6 +3,7 @@ package mongodbatlas
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"sync"
 
@@ -86,7 +87,7 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req dbplugin.NewUserRequest)
 		return dbplugin.NewUserResponse{}, dbutil.ErrEmptyCreationStatement
 	}
 	if len(req.Statements.Commands) > 1 {
-		return dbplugin.NewUserResponse{}, fmt.Errorf("only 1 creation statement supported for creation")
+		return dbplugin.NewUserResponse{}, errors.New("only 1 creation statement supported for creation")
 	}
 
 	client, err := m.getConnection(ctx)
@@ -112,7 +113,7 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req dbplugin.NewUserRequest)
 	}
 
 	if len(databaseUser.Roles) == 0 {
-		return dbplugin.NewUserResponse{}, fmt.Errorf("roles array is required in creation statement")
+		return dbplugin.NewUserResponse{}, errors.New("roles array is required in creation statement")
 	}
 
 	databaseUserRequest := &mongodbatlas.DatabaseUser{
@@ -130,7 +131,7 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req dbplugin.NewUserRequest)
 
 	clusters, _, err := client.Clusters.List(ctx, m.ProjectID, &mongodbatlas.ListOptions{})
 	if err != nil {
-		return dbplugin.NewUserResponse{}, fmt.Errorf("roles array is required in creation statement")
+		return dbplugin.NewUserResponse{}, errors.New("roles array is required in creation statement")
 	}
 
 	clusterList := []string{}
@@ -148,7 +149,7 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req dbplugin.NewUserRequest)
 
 			operation := func() error {
 
-				status, _, err := client.Clusters.Status(context.Background(), m.ProjectID, clustername)
+				status, _, err := client.Clusters.Status(ctx, m.ProjectID, clustername)
 				if err != nil {
 					return err
 				}
