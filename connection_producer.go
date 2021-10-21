@@ -5,11 +5,11 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/Sectorbob/mlab-ns2/gae/ns/digest"
 	dbplugin "github.com/hashicorp/vault/sdk/database/dbplugin/v5"
 	"github.com/hashicorp/vault/sdk/database/helper/connutil"
 	"github.com/hashicorp/vault/sdk/helper/useragent"
 	"github.com/mitchellh/mapstructure"
+	"github.com/mongodb-forks/digest"
 	"go.mongodb.org/atlas/mongodbatlas"
 )
 
