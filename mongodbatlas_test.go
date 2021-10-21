@@ -14,9 +14,9 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
-	"github.com/Sectorbob/mlab-ns2/gae/ns/digest"
 	dbplugin "github.com/hashicorp/vault/sdk/database/dbplugin/v5"
 	dbtesting "github.com/hashicorp/vault/sdk/database/dbplugin/v5/testing"
+	"github.com/mongodb-forks/digest"
 	"github.com/stretchr/testify/require"
 	"go.mongodb.org/atlas/mongodbatlas"
 	"go.mongodb.org/mongo-driver/mongo"
