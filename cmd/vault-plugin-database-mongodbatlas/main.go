@@ -20,12 +20,7 @@ func main() {
 
 // Run instantiates a MongoDBAtlas object, and runs the RPC server for the plugin
 func Run() error {
-	db, err := mongodbatlas.New()
-	if err != nil {
-		return err
-	}
-
-	dbplugin.Serve(db.(dbplugin.Database))
+	dbplugin.ServeMultiplex(mongodbatlas.New)
 
 	return nil
 }
