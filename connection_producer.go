@@ -11,9 +11,18 @@ import (
 	dbplugin "github.com/hashicorp/vault/sdk/database/dbplugin/v5"
 	"github.com/hashicorp/vault/sdk/database/helper/connutil"
 	"github.com/hashicorp/vault/sdk/helper/useragent"
+	"github.com/hashicorp/vault/sdk/logical"
 	"github.com/mitchellh/mapstructure"
 	"github.com/mongodb-forks/digest"
 	"go.mongodb.org/atlas/mongodbatlas"
+)
+
+const (
+	// TODO: The Vault version used in the user agent string is hard coded until
+	//  it's possible for database plugins to use the system view to obtain correct
+	//  Vault version information via the plugin environment.
+	userAgentVaultVersion = "1.13.0"
+	userAgentPluginName   = "database-mongodbatlas"
 )
 
 type mongoDBAtlasConnectionProducer struct {
@@ -66,7 +75,12 @@ func (c *mongoDBAtlasConnectionProducer) Connection(_ context.Context) (interfac
 	if err != nil {
 		return nil, err
 	}
-	client.UserAgent = useragent.String()
+
+	// TODO: Obtain the plugin environment from the system view.
+	env := &logical.PluginEnvironment{
+		VaultVersion: userAgentVaultVersion,
+	}
+	client.UserAgent = useragent.PluginString(env, userAgentPluginName)
 
 	c.client = client
 
