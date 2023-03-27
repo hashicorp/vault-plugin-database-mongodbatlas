@@ -45,4 +45,4 @@ can be provisioned manually to test.
 | ATLAS_CLUSTER_NAME   | The desired cluster's name, e.g., vault-project.xyz.mongodb.net  |
 | ATLAS_ALLOWLIST_IP   | The public IP of the machine that the test is being performed    |
 
-Then you can run `make test-acc` to execute the tests.
+Then you can run `make testacc` to execute the tests.

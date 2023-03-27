@@ -552,7 +552,6 @@ func createAtlasDBUser(t testing.TB, projectID, publicKey, privateKey, username,
 	if err != nil {
 		t.Fatalf("Error creating user %s", err)
 	}
-
 }
 
 func deleteAtlasDBUser(t testing.TB, projectID, publicKey, privateKey, username string) {
@@ -577,5 +576,4 @@ func getClient(publicKey, privateKey string) (*mongodbatlas.Client, error) {
 	}
 
 	return mongodbatlas.New(cl)
-
 }
