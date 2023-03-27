@@ -16,8 +16,8 @@ Feature requests can be submitted in the Issues section or [directly to MongoDB]
 
 ## Quick Links
 
-- [Database Secrets Engine for MongoDB Atlas - Docs](https://www.vaultproject.io/docs/secrets/databases/mongodbatlas)
-- [Database Secrets Engine for MongoDB Atlas - API Docs](https://www.vaultproject.io/api-docs/secret/databases/mongodbatlas/)
+- [Database Secrets Engine for MongoDB Atlas - Docs](https://developer.hashicorp.com/vault/docs/secrets/databases/mongodbatlas)
+- [Database Secrets Engine for MongoDB Atlas - API Docs](https://developer.hashicorp.com/vault/api-docs/secret/databases/mongodbatlas)
 - [MongoDB Atlas Website](https://www.mongodb.com/cloud/atlas)
 - [Vault Website](https://www.vaultproject.io)
 
