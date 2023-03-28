@@ -16,8 +16,8 @@ Feature requests can be submitted in the Issues section or [directly to MongoDB]
 
 ## Quick Links
 
-- [Database Secrets Engine for MongoDB Atlas - Docs](https://www.vaultproject.io/docs/secrets/databases/mongodbatlas)
-- [Database Secrets Engine for MongoDB Atlas - API Docs](https://www.vaultproject.io/api-docs/secret/databases/mongodbatlas/)
+- [Database Secrets Engine for MongoDB Atlas - Docs](https://developer.hashicorp.com/vault/docs/secrets/databases/mongodbatlas)
+- [Database Secrets Engine for MongoDB Atlas - API Docs](https://developer.hashicorp.com/vault/api-docs/secret/databases/mongodbatlas)
 - [MongoDB Atlas Website](https://www.mongodb.com/cloud/atlas)
 - [Vault Website](https://www.vaultproject.io)
 
@@ -45,4 +45,4 @@ can be provisioned manually to test.
 | ATLAS_CLUSTER_NAME   | The desired cluster's name, e.g., vault-project.xyz.mongodb.net  |
 | ATLAS_ALLOWLIST_IP   | The public IP of the machine that the test is being performed    |
 
-Then you can run `make test-acc` to execute the tests.
+Then you can run `make testacc` to execute the tests.

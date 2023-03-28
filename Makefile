@@ -1,8 +1,6 @@
 TOOL?=vault-plugin-database-mongodbatlas
 TEST?=$$(go list ./... | grep -v /vendor/)
-VETARGS?=-asmdecl -atomic -bool -buildtags -copylocks -methods -nilfunc -printf -rangeloops -shift -structtags -unsafeptr
-EXTERNAL_TOOLS=\
-	github.com/mitchellh/gox
+EXTERNAL_TOOLS=
 BUILD_TAGS?=${TOOL}
 GOFMT_FILES?=$$(find . -name '*.go' | grep -v vendor)
 
@@ -21,7 +19,7 @@ dev: fmtcheck generate
 test: fmtcheck generate
 	CGO_ENABLED=0 VAULT_TOKEN= VAULT_ACC= go test -v -tags='$(BUILD_TAGS)' $(TEST) $(TESTARGS) -count=1 -timeout=20m -parallel=4
 
-test-acc: fmtcheck generate
+testacc: fmtcheck generate
 	CGO_ENABLED=0 VAULT_TOKEN= VAULT_ACC=1 go test -v -tags='$(BUILD_TAGS)' $(TEST) $(TESTARGS) -count=1 -timeout=20m -parallel=4
 
 testcompile: fmtcheck generate
@@ -50,4 +48,4 @@ fmt:
 proto:
 	protoc *.proto --go_out=plugins=grpc:.
 
-.PHONY: bin default generate test vet bootstrap fmt fmtcheck
+.PHONY: bin default generate test testacc bootstrap fmt fmtcheck
