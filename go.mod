@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/vault/sdk v0.8.1
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mongodb-forks/digest v1.0.3
-	github.com/stretchr/testify v1.7.0
+	github.com/stretchr/testify v1.8.2
 	go.mongodb.org/atlas v0.13.0
 	go.mongodb.org/mongo-driver v1.7.3
 )
@@ -61,5 +61,5 @@ require (
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect
 	google.golang.org/grpc v1.41.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
-	gopkg.in/yaml.v3 v3.0.0-20200313102051-9f266ea9e77c // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
