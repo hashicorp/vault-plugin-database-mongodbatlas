@@ -21,7 +21,9 @@ jobs:
         cache: true
     - name: Get IP
       id: getip
-      run: echo "ip_address=$(curl https://api.ipify.org)" >> "$GITHUB_OUTPUT"
+      run: echo "ip_address=$(curl -s https://api.ipify.org)" >> "$GITHUB_OUTPUT"
+    - name: Check IP
+      run: echo "${{ steps.getip.outputs.ip_address }}"
     - name: Run Acceptance Tests
       env:
         ATLAS_ALLOWLIST_IP: ${{ steps.getip.outputs.ip_address }}
