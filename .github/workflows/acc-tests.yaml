@@ -19,8 +19,10 @@ jobs:
       with:
         go-version-file: .go-version
         cache: true
-    - name: Check IP
+    - name: Get IP
       run: echo "ip_address=$(curl https://api.ipify.org)" >> "$GITHUB_OUTPUT"
+    - name: Check IP
+      run: echo "${{ steps.changes.outputs.count.ip_address }}"
     - name: Run Acceptance Tests
       env:
         ATLAS_ALLOWLIST_IP: ${{ steps.changes.outputs.count.ip_address }}
