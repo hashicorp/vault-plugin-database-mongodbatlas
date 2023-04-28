@@ -1,3 +1,6 @@
+// Copyright (c) HashiCorp, Inc.
+// SPDX-License-Identifier: MPL-2.0
+
 package mongodbatlas
 
 import (
@@ -14,7 +17,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 
-	dbplugin "github.com/hashicorp/vault/sdk/database/dbplugin/v5"
+	"github.com/hashicorp/vault/sdk/database/dbplugin/v5"
 	dbtesting "github.com/hashicorp/vault/sdk/database/dbplugin/v5/testing"
 	"github.com/mongodb-forks/digest"
 	"github.com/stretchr/testify/require"
@@ -29,7 +32,7 @@ const (
 	envVarAtlasPublicKey   = "ATLAS_PUBLIC_KEY"
 	envVarAtlasPrivateKey  = "ATLAS_PRIVATE_KEY"
 	envVarAtlasProjectID   = "ATLAS_PROJECT_ID"
-	envVarAtlasConnURL     = "ATLAS_CONN_URL"
+	envVarAtlasClusterName = "ATLAS_CLUSTER_NAME"
 	envVarAtlasAllowListIP = "ATLAS_ALLOWLIST_IP"
 
 	envVarRunAccTests = "VAULT_ACC"
@@ -155,7 +158,7 @@ func TestAcceptanceDatabaseUser_CreateUser(t *testing.T) {
 	publicKey := os.Getenv(envVarAtlasPublicKey)
 	privateKey := os.Getenv(envVarAtlasPrivateKey)
 	projectID := os.Getenv(envVarAtlasProjectID)
-	connURL := os.Getenv(envVarAtlasConnURL)
+	connURL := os.Getenv(envVarAtlasClusterName)
 
 	connectionDetails := map[string]interface{}{
 		"public_key":  publicKey,
@@ -199,7 +202,7 @@ func TestAcceptanceDatabaseUser_CreateUserDefaultTemplate(t *testing.T) {
 	publicKey := os.Getenv(envVarAtlasPublicKey)
 	privateKey := os.Getenv(envVarAtlasPrivateKey)
 	projectID := os.Getenv(envVarAtlasProjectID)
-	connURL := os.Getenv(envVarAtlasConnURL)
+	connURL := os.Getenv(envVarAtlasClusterName)
 
 	connectionDetails := map[string]interface{}{
 		"public_key":  publicKey,
@@ -250,7 +253,7 @@ func TestAcceptanceDatabaseUser_CreateUserWithTemplate(t *testing.T) {
 	publicKey := os.Getenv(envVarAtlasPublicKey)
 	privateKey := os.Getenv(envVarAtlasPrivateKey)
 	projectID := os.Getenv(envVarAtlasProjectID)
-	connURL := os.Getenv(envVarAtlasConnURL)
+	connURL := os.Getenv(envVarAtlasClusterName)
 
 	connectionDetails := map[string]interface{}{
 		"public_key":        publicKey,
@@ -301,7 +304,7 @@ func TestAcceptanceDatabaseUser_CreateUserWithSpecialChar(t *testing.T) {
 	publicKey := os.Getenv(envVarAtlasPublicKey)
 	privateKey := os.Getenv(envVarAtlasPrivateKey)
 	projectID := os.Getenv(envVarAtlasProjectID)
-	connURL := os.Getenv(envVarAtlasConnURL)
+	connURL := os.Getenv(envVarAtlasClusterName)
 
 	connectionDetails := map[string]interface{}{
 		"public_key":  publicKey,
@@ -345,7 +348,7 @@ func TestAcceptanceDatabaseUser_DeleteUser(t *testing.T) {
 	publicKey := os.Getenv(envVarAtlasPublicKey)
 	privateKey := os.Getenv(envVarAtlasPrivateKey)
 	projectID := os.Getenv(envVarAtlasProjectID)
-	connURL := os.Getenv(envVarAtlasConnURL)
+	connURL := os.Getenv(envVarAtlasClusterName)
 
 	connectionDetails := map[string]interface{}{
 		"public_key":  publicKey,
@@ -403,7 +406,7 @@ func TestAcceptanceDatabaseUser_UpdateUser_Password(t *testing.T) {
 	publicKey := os.Getenv(envVarAtlasPublicKey)
 	privateKey := os.Getenv(envVarAtlasPrivateKey)
 	projectID := os.Getenv(envVarAtlasProjectID)
-	connURL := os.Getenv(envVarAtlasConnURL)
+	connURL := os.Getenv(envVarAtlasClusterName)
 
 	connectionDetails := map[string]interface{}{
 		"public_key":  publicKey,
@@ -549,7 +552,6 @@ func createAtlasDBUser(t testing.TB, projectID, publicKey, privateKey, username,
 	if err != nil {
 		t.Fatalf("Error creating user %s", err)
 	}
-
 }
 
 func deleteAtlasDBUser(t testing.TB, projectID, publicKey, privateKey, username string) {
@@ -574,5 +576,4 @@ func getClient(publicKey, privateKey string) (*mongodbatlas.Client, error) {
 	}
 
 	return mongodbatlas.New(cl)
-
 }

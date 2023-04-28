@@ -1,0 +1,34 @@
+name: Run Acceptance Tests
+on:
+  push:
+
+permissions:
+  contents: read
+
+jobs:
+  run-acc-tests:
+    runs-on: ubuntu-latest
+    env:
+      ATLAS_PUBLIC_KEY: ${{ secrets.ATLAS_PUBLIC_KEY }}
+      ATLAS_PRIVATE_KEY: ${{ secrets.ATLAS_PRIVATE_KEY }}
+      ATLAS_PROJECT_ID: ${{ secrets.ATLAS_PROJECT_ID }}
+      ATLAS_CLUSTER_NAME: ${{ secrets.ATLAS_CLUSTER_NAME }}
+    steps:
+    - uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3 # v3.5.0
+    - uses: actions/setup-go@4d34df0c2316fe8122ab82dc22947d607c0c91f9 # v4.0.0
+      with:
+        go-version-file: .go-version
+        cache: true
+    - name: Get IP
+      id: getip
+      run: echo "ip_address=$(curl -s https://api.ipify.org?format=json | jq -r .ip)" >> "$GITHUB_OUTPUT"
+    - name: Check IP
+      run: |
+        if [[ -z "${{ steps.getip.outputs.ip_address }}" ]]; then
+          echo "Unable to get runner IP address. Cannot update Network Permission List for acceptance tests."
+          exit 1
+        fi
+    - name: Run Acceptance Tests
+      env:
+        ATLAS_ALLOWLIST_IP: ${{ steps.getip.outputs.ip_address }}
+      run: make testacc
