@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -562,7 +563,14 @@ func deleteAtlasDBUser(t testing.TB, projectID, publicKey, privateKey, username 
 		t.Fatalf("Error creating client: %s", err)
 	}
 
-	_, err = client.DatabaseUsers.Delete(context.Background(), "admin", projectID, username)
+	var databaseName string
+	if strings.HasPrefix(username, "CN=") {
+		databaseName = "$external"
+	} else {
+		databaseName = "admin"
+	}
+
+	_, err = client.DatabaseUsers.Delete(context.Background(), databaseName, projectID, username)
 	if err != nil {
 		t.Fatalf("Error deleting database user: %s", err)
 	}

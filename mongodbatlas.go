@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/go-secure-stdlib/strutil"
 	dbplugin "github.com/hashicorp/vault/sdk/database/dbplugin/v5"
@@ -195,15 +196,23 @@ func (m *MongoDBAtlas) DeleteUser(ctx context.Context, req dbplugin.DeleteUserRe
 		}
 	}
 
-	// TODO(austin): Need proper deletion statements to support X.509 user deletion.
-	//               The admin database is not correct.
-	// Default to "admin" if no db provided
-	if databaseUser.DatabaseName == "" {
-		databaseUser.DatabaseName = "admin"
+	// If the user is an X.509 user, delete the user from the X.509 certificate subject field
+	if strings.HasPrefix(req.Username, "CN=") {
+		if databaseUser.DatabaseName == "" {
+			databaseUser.DatabaseName = "$external"
+		}
+	} else {
+		// If the user is not an X.509 user, delete the user from the MongoDB Atlas project
+		if databaseUser.DatabaseName == "" {
+			databaseUser.DatabaseName = "admin"
+		}
 	}
 
 	_, err = client.DatabaseUsers.Delete(ctx, databaseUser.DatabaseName, m.ProjectID, req.Username)
-	return dbplugin.DeleteUserResponse{}, err
+	if err != nil {
+		return dbplugin.DeleteUserResponse{}, fmt.Errorf("error deleting user from project: %w", err)
+	}
+	return dbplugin.DeleteUserResponse{}, nil
 }
 
 func (m *MongoDBAtlas) getConnection(ctx context.Context) (*mongodbatlas.Client, error) {
