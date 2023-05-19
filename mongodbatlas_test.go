@@ -242,7 +242,7 @@ func TestAcceptanceDatabaseUser_CreateX509User(t *testing.T) {
 	createResp := dbtesting.AssertNewUser(t, db, createReq)
 	defer deleteAtlasDBUser(t, projectID, publicKey, privateKey, createResp.Username)
 
-	assertClientCertCredsExist(t, projectID, publicKey, privateKey, subject, connURL, testMongoDBAtlasX509Role)
+	assertX509UserExist(t, projectID, publicKey, privateKey, subject, connURL, testMongoDBAtlasX509Role)
 }
 
 func TestAcceptanceDatabaseUser_CreateUserDefaultTemplate(t *testing.T) {
@@ -497,7 +497,7 @@ func TestAcceptanceDatabaseUser_UpdateUser_Password(t *testing.T) {
 	assertCredsExists(t, projectID, publicKey, privateKey, dbUser, newPassword, connURL, "")
 }
 
-func assertClientCertCredsExist(t testing.TB, projectID, publicKey, privateKey, subject, connURL, expectedRolesAndScopesJSON string) {
+func assertX509UserExist(t testing.TB, projectID, publicKey, privateKey, subject, connURL, expectedRolesAndScopesJSON string) {
 	t.Helper()
 
 	client, err := getClient(publicKey, privateKey)
