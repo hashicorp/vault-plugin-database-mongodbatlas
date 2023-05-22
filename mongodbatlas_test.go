@@ -510,7 +510,7 @@ func assertX509UserExist(t testing.TB, projectID, publicKey, privateKey, subject
 		t.Fatalf("Failed to retrieve user from from MongoDB Atlas: %s", err)
 	}
 	if dbUser.X509Type != "CUSTOMER" {
-		t.Fatalf("Failed because dbUser is expected to be CUSTOMER", err)
+		t.Fatalf("Error! dbUser is expected to be CUSTOMER: %s", err)
 	}
 	if expectedRolesAndScopesJSON != "" {
 		var expectedRolesAndScopes mongoDBAtlasStatement
