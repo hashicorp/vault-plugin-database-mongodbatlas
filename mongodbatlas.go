@@ -197,7 +197,7 @@ func (m *MongoDBAtlas) DeleteUser(ctx context.Context, req dbplugin.DeleteUserRe
 	}
 
 	// If the user is an X.509 user, delete the user from the X.509 certificate subject field
-	if strings.HasPrefix(req.Username, "CN=") {
+	if isX509User(req.Username) {
 		if databaseUser.DatabaseName == "" {
 			databaseUser.DatabaseName = "$external"
 		}
@@ -227,6 +227,11 @@ func (m *MongoDBAtlas) getConnection(ctx context.Context) (*mongodbatlas.Client,
 // Type returns the TypeName for this backend
 func (m *MongoDBAtlas) Type() (string, error) {
 	return mongoDBAtlasTypeName, nil
+}
+
+// Check to see if the user is a X509 user
+func isX509User(username string) bool {
+	return strings.HasPrefix(username, "CN=")
 }
 
 type mongoDBAtlasStatement struct {

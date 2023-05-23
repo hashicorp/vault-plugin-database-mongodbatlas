@@ -12,7 +12,6 @@ import (
 	"net/url"
 	"os"
 	"reflect"
-	"strings"
 	"testing"
 	"time"
 
@@ -651,7 +650,7 @@ func deleteAtlasDBUser(t testing.TB, projectID, publicKey, privateKey, username 
 	}
 
 	var databaseName string
-	if strings.HasPrefix(username, "CN=") {
+	if isX509User(username) {
 		databaseName = "$external"
 	} else {
 		databaseName = "admin"
