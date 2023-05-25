@@ -196,7 +196,7 @@ func (m *MongoDBAtlas) DeleteUser(ctx context.Context, req dbplugin.DeleteUserRe
 		}
 	}
 
-	// If the user is an X.509 user, delete the user from the X.509 certificate subject field
+	// If the user is an X.509 user, delete the user from the $external database
 	if isX509User(req.Username) {
 		if databaseUser.DatabaseName == "" {
 			databaseUser.DatabaseName = "$external"
