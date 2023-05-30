@@ -113,8 +113,8 @@ github.com/hashicorp/go-version v1.6.0/go.mod h1:fltr4n8CU8Ke44wwGCBoEymUuxUHl09
 github.com/hashicorp/golang-lru v0.5.0/go.mod h1:/m3WP610KZHVQ1SGc6re/UDhFvYD7pJ4Ao+sR/qLZy8=
 github.com/hashicorp/golang-lru v0.5.4 h1:YDjusn29QI/Das2iO9M0BHnIbxPeyuCHsjMW+lJfyTc=
 github.com/hashicorp/golang-lru v0.5.4/go.mod h1:iADmTwqILo4mZ8BN3D2Q6+9jd8WM5uGBxy+E8yxSoD4=
-github.com/hashicorp/vault/sdk v0.9.1 h1:fMkjCfqC5ohA2b7p1kv5poe488pFhBl9oaz2FkDkDAQ=
-github.com/hashicorp/vault/sdk v0.9.1/go.mod h1:YmQ899tcCpwEgH6fOfU7AY0OURy8EqYj8sEdRac25TM=
+github.com/hashicorp/vault/sdk v0.9.2-0.20230530190758-08ee474850e0 h1:1WIDN3dPJHGYjJ1j6D1wKApslivKRT8vG2NgQvWa9xc=
+github.com/hashicorp/vault/sdk v0.9.2-0.20230530190758-08ee474850e0/go.mod h1:YmQ899tcCpwEgH6fOfU7AY0OURy8EqYj8sEdRac25TM=
 github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87 h1:xixZ2bWeofWV68J+x6AzmKuVM/JWCQwkWm6GW/MUR6I=
 github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87/go.mod h1:CtWFDAQgb7dxtzFs4tWbplKIe2jSi3+5vKbgIO0SLnQ=
 github.com/inconshreveable/mousetrap v1.0.0/go.mod h1:PxqpIevigyE2G7u3NXJIT2ANytuPF1OarO4DADm73n8=
