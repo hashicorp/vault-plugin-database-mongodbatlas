@@ -10,7 +10,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mongodb-forks/digest v1.0.3
 	github.com/stretchr/testify v1.8.2
-	go.mongodb.org/atlas v0.13.0
+	go.mongodb.org/atlas v0.28.0
 	go.mongodb.org/mongo-driver v1.7.3
 )
 
@@ -43,7 +43,6 @@ require (
 	github.com/mitchellh/go-testing-interface v1.14.1 // indirect
 	github.com/mitchellh/reflectwalk v1.0.2 // indirect
 	github.com/oklog/run v1.1.0 // indirect
-	github.com/openlyinc/pointy v1.1.2 // indirect
 	github.com/pierrec/lz4 v2.6.1+incompatible // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
