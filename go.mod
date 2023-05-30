@@ -8,7 +8,7 @@ require (
 	github.com/hashicorp/vault/sdk v0.9.2-0.20230530190758-08ee474850e0
 	github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87 // indirect
 	github.com/mitchellh/mapstructure v1.5.0
-	github.com/mongodb-forks/digest v1.0.3
+	github.com/mongodb-forks/digest v1.0.4
 	github.com/stretchr/testify v1.8.2
 	go.mongodb.org/atlas v0.13.0
 	go.mongodb.org/mongo-driver v1.7.3
