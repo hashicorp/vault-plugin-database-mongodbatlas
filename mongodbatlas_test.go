@@ -27,7 +27,8 @@ import (
 )
 
 const (
-	testMongoDBAtlasRole = `{"roles": [{"databaseName":"admin","roleName":"readWriteAnyDatabase"}], "scopes": [{"name": "vault-test-free-cluster", "type": "CLUSTER"}]}`
+	testMongoDBAtlasRole     = `{"roles": [{"databaseName":"admin","roleName":"readWriteAnyDatabase"}], "scopes": [{"name": "vault-test-free-cluster", "type": "CLUSTER"}]}`
+	testMongoDBAtlasX509Role = `{"database_name": "$external", "x509Type": "CUSTOMER", "roles": [{"databaseName":"admin","roleName":"readWriteAnyDatabase"}], "scopes": [{"name": "vault-test-free-cluster", "type": "CLUSTER"}]}`
 
 	envVarAtlasPublicKey   = "ATLAS_PUBLIC_KEY"
 	envVarAtlasPrivateKey  = "ATLAS_PRIVATE_KEY"
@@ -137,6 +138,10 @@ func TestIntegrationDatabaseUser_Initialize(t *testing.T) {
 	expectedConfig := map[string]interface{}{
 		"public_key":  "aspergesme",
 		"private_key": "domine",
+		dbplugin.SupportedCredentialTypesKey: []interface{}{
+			dbplugin.CredentialTypePassword.String(),
+			dbplugin.CredentialTypeClientCertificate.String(),
+		},
 	}
 
 	resp := dbtesting.AssertInitialize(t, db, req)
@@ -192,6 +197,51 @@ func TestAcceptanceDatabaseUser_CreateUser(t *testing.T) {
 	defer deleteAtlasDBUser(t, projectID, publicKey, privateKey, createResp.Username)
 
 	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL, testMongoDBAtlasRole)
+}
+
+func TestAcceptanceDatabaseUser_CreateX509User(t *testing.T) {
+	if !runAcceptanceTests {
+		t.SkipNow()
+	}
+
+	publicKey := os.Getenv(envVarAtlasPublicKey)
+	privateKey := os.Getenv(envVarAtlasPrivateKey)
+	projectID := os.Getenv(envVarAtlasProjectID)
+	connURL := os.Getenv(envVarAtlasClusterName)
+
+	connectionDetails := map[string]interface{}{
+		"public_key":  publicKey,
+		"private_key": privateKey,
+		"project_id":  projectID,
+	}
+
+	db := new()
+	defer dbtesting.AssertClose(t, db)
+
+	initReq := dbplugin.InitializeRequest{
+		Config: connectionDetails,
+	}
+
+	dbtesting.AssertInitialize(t, db, initReq)
+
+	subject := "CN=token_my-test-role_1684350512"
+	createReq := dbplugin.NewUserRequest{
+		CredentialType: dbplugin.CredentialTypeClientCertificate,
+		UsernameConfig: dbplugin.UsernameMetadata{
+			DisplayName: "testcreate",
+			RoleName:    "test",
+		},
+		Statements: dbplugin.Statements{
+			Commands: []string{testMongoDBAtlasX509Role},
+		},
+		Subject:    subject,
+		Expiration: time.Now().Add(time.Minute),
+	}
+
+	createResp := dbtesting.AssertNewUser(t, db, createReq)
+	defer deleteAtlasDBUser(t, projectID, publicKey, privateKey, createResp.Username)
+
+	assertX509UserExist(t, projectID, publicKey, privateKey, subject, connURL, testMongoDBAtlasX509Role)
 }
 
 func TestAcceptanceDatabaseUser_CreateUserDefaultTemplate(t *testing.T) {
@@ -446,6 +496,43 @@ func TestAcceptanceDatabaseUser_UpdateUser_Password(t *testing.T) {
 	assertCredsExists(t, projectID, publicKey, privateKey, dbUser, newPassword, connURL, "")
 }
 
+func assertX509UserExist(t testing.TB, projectID, publicKey, privateKey, subject, connURL, expectedRolesAndScopesJSON string) {
+	t.Helper()
+
+	client, err := getClient(publicKey, privateKey)
+	if err != nil {
+		t.Fatalf("Failed to get an API client: %s", err)
+	}
+
+	dbUser, _, err := client.DatabaseUsers.Get(context.Background(), "$external", projectID, subject)
+	if err != nil {
+		t.Fatalf("Failed to retrieve user from from MongoDB Atlas: %s", err)
+	}
+	if dbUser.X509Type != "CUSTOMER" {
+		t.Fatalf("Error! dbUser is expected to be CUSTOMER: %s", err)
+	}
+	if expectedRolesAndScopesJSON != "" {
+		var expectedRolesAndScopes mongoDBAtlasStatement
+		err = json.Unmarshal([]byte(expectedRolesAndScopesJSON), &expectedRolesAndScopes)
+		if err != nil {
+			t.Fatalf("Failed to unmarshal database user: %s", err)
+		}
+		if len(dbUser.Roles) != len(expectedRolesAndScopes.Roles) || len(dbUser.Scopes) != len(expectedRolesAndScopes.Scopes) {
+			t.Fatalf("Mismatch in roles or scopes, expected %+v but got %+v", expectedRolesAndScopes, dbUser)
+		}
+		for i := range dbUser.Roles {
+			if dbUser.Roles[i] != expectedRolesAndScopes.Roles[i] {
+				t.Fatalf("Mismatch in roles, expected %+v but got %+v", expectedRolesAndScopes.Roles[i], dbUser.Roles[i])
+			}
+		}
+		for i := range dbUser.Scopes {
+			if dbUser.Scopes[i] != expectedRolesAndScopes.Scopes[i] {
+				t.Fatalf("Mismatch in scopes, expected %+v but got %+v", expectedRolesAndScopes.Scopes[i], dbUser.Scopes[i])
+			}
+		}
+	}
+}
+
 func assertCredsExists(t testing.TB, projectID, publicKey, privateKey, username, password, connURL, expectedRolesAndScopesJSON string) {
 	t.Helper()
 
@@ -562,7 +649,14 @@ func deleteAtlasDBUser(t testing.TB, projectID, publicKey, privateKey, username 
 		t.Fatalf("Error creating client: %s", err)
 	}
 
-	_, err = client.DatabaseUsers.Delete(context.Background(), "admin", projectID, username)
+	var databaseName string
+	if isX509User(username) {
+		databaseName = "$external"
+	} else {
+		databaseName = "admin"
+	}
+
+	_, err = client.DatabaseUsers.Delete(context.Background(), databaseName, projectID, username)
 	if err != nil {
 		t.Fatalf("Error deleting database user: %s", err)
 	}
