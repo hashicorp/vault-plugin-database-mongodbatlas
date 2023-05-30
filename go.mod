@@ -3,7 +3,7 @@ module github.com/hashicorp/vault-plugin-database-mongodbatlas
 go 1.19
 
 require (
-	github.com/hashicorp/go-hclog v1.4.0
+	github.com/hashicorp/go-hclog v1.5.0
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2
 	github.com/hashicorp/vault/sdk v0.9.2-0.20230530190758-08ee474850e0
 	github.com/hashicorp/yamux v0.0.0-20211028200310-0bc27b27de87 // indirect
