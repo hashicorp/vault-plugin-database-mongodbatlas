@@ -10,7 +10,7 @@ require (
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mongodb-forks/digest v1.0.4
 	github.com/stretchr/testify v1.8.4
-	go.mongodb.org/atlas v0.28.0
+	go.mongodb.org/atlas v0.29.0
 	go.mongodb.org/mongo-driver v1.11.6
 )
 
