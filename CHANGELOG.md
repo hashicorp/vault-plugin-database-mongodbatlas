@@ -1,5 +1,10 @@
 ## Unreleased
 
+IMPROVEMENTS:
+* Updated dependencies:
+  * `github.com/hashicorp/vault/sdk` v0.10.2 -> v0.11.0
+  * `go.mongodb.org/mongo-driver` v1.13.1 -> v1.14.0
+
 ## v0.11.0
 
 CHANGES:
