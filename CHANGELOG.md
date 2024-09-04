@@ -1,5 +1,18 @@
 ## Unreleased
 
+## v0.13.0
+
+IMPROVEMENTS:
+* Bump Go version to 1.22.6
+* Updated dependencies [[GH-81]](https://github.com/hashicorp/vault-plugin-database-mongodbatlas/pull/81):
+  * `github.com/hashicorp/go-hclog` v1.6.2 -> v1.6.3
+  * `github.com/hashicorp/vault/sdk` v0.11.0 -> v0.13.0
+  * `github.com/mongodb-forks/digest` v1.0.5 -> v1.1.0
+  * `go.mongodb.org/atlas` v0.36.0 -> v0.37.0
+  * `go.mongodb.org/mongo-driver` v1.14.0 -> v1.16.1
+  * `github.com/docker/docker` 24.0.9+incompatible -> 25.0.6+incompatible [[GH-83]](https://github.com/hashicorp/vault-plugin-database-mongodbatlas/pull/83)
+  * `google.golang.org/grpc` v1.64.0 -> v1.64.1 [[GH-84]](https://github.com/hashicorp/vault-plugin-database-mongodbatlas/pull/84)
+
 ## v0.12.0
 
 IMPROVEMENTS:
