@@ -4,7 +4,7 @@
 
 IMPROVEMENTS:
 * Bump Go version to 1.23.3
-* Updated dependencies
+* Updated dependencies [[GH-89]](https://github.com/hashicorp/vault-plugin-database-mongodbatlas/pull/89)
 
 ## v0.13.0
 
