@@ -81,6 +81,9 @@ func newTestController() (testController, error) {
 	privateKey := os.Getenv(envVarAtlasPrivateKey)
 	projectID := os.Getenv(envVarAtlasProjectID)
 
+	fmt.Printf("env var public: %s", publicKey)
+	fmt.Printf("env var project: %s", projectID)
+
 	// This is the public IP of your machine so that it gets allow listed
 	// for the project during the test run
 	ip := os.Getenv(envVarAtlasAllowListIP)
