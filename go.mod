@@ -7,13 +7,13 @@ toolchain go1.24.3
 require (
 	github.com/hashicorp/go-hclog v1.6.3
 	github.com/hashicorp/go-secure-stdlib/strutil v0.1.2
-	github.com/hashicorp/vault/sdk v0.17.0
+	github.com/hashicorp/vault/sdk v0.18.0
 	github.com/hashicorp/yamux v0.1.2 // indirect
 	github.com/mitchellh/mapstructure v1.5.0
 	github.com/mongodb-forks/digest v1.1.0
 	github.com/stretchr/testify v1.10.0
 	go.mongodb.org/atlas v0.38.0
-	go.mongodb.org/mongo-driver v1.17.3
+	go.mongodb.org/mongo-driver v1.17.4
 )
 
 require (
