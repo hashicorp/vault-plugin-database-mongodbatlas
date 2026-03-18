@@ -3,7 +3,7 @@
 ### March 16, 2026
 
 IMPROVEMENTS:
-* Updated dependencies (#110):
+* Updated dependencies [[GH-110]](https://github.com/hashicorp/vault-plugin-database-mongodbatlas/pull/110):
   * go 1.25.0 => 1.26.1
   * golang.org/x/sync v0.16.0 => v0.18.0
   * github.com/hashicorp/vault/sdk v0.19.0 => v0.23.0
