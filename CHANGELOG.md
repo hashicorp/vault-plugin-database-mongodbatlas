@@ -1,3 +1,17 @@
+## Unreleased
+## v0.17.0
+### March 16, 2026
+
+IMPROVEMENTS:
+* Updated dependencies [[GH-110]](https://github.com/hashicorp/vault-plugin-database-mongodbatlas/pull/110):
+  * go 1.25.0 => 1.26.1
+  * golang.org/x/sync v0.16.0 => v0.18.0
+  * github.com/hashicorp/vault/sdk v0.19.0 => v0.23.0
+  * golang.org/x/text v0.27.0 => v0.31.0
+  * golang.org/x/sys v0.34.0 => v0.38.0
+  * golang.org/x/crypto v0.40.0 => v0.45.0
+  * golang.org/x/net v0.42.0 => v0.47.0
+
 ## v0.15.0
 IMPROVEMENTS:
 * Bump Go version to 1.24.3
