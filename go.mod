@@ -11,7 +11,7 @@ require (
 	github.com/mongodb-forks/digest v1.1.0
 	github.com/stretchr/testify v1.11.1
 	go.mongodb.org/atlas v0.38.0
-	go.mongodb.org/mongo-driver v1.17.4
+	go.mongodb.org/mongo-driver v1.17.9
 )
 
 require (
