@@ -1,4 +1,10 @@
-## Unreleased
+## v0.17.1
+### March 19, 2026
+
+* Automated dependency upgrades [[GH-112]](https://github.com/hashicorp/vault-plugin-database-mongodbatlas/pull/112):
+  * github.com/hashicorp/vault/sdk v0.24.0 => v0.24.0
+  * go.mongodb.org/mongo-driver v1.17.4 => v1.17.9
+
 ## v0.17.0
 ### March 16, 2026
 
