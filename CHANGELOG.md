@@ -1,3 +1,9 @@
+## v0.18.0
+### September 10, 2026
+
+* prepare v0.18.0 release (#120)
+* Bump golang.org/x/crypto from 0.46.0 to 0.52.0 (#108) 
+
 ## v0.17.1
 ### March 19, 2026
 
