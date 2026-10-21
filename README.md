@@ -14,6 +14,21 @@ Bugs should be filed under the Issues section of this repo.
 
 Feature requests can be submitted in the Issues section or [directly to MongoDB](https://feedback.mongodb.com/forums/924145-atlas) - just select the Vault plugin as the category or vote for an already suggested feature.
 
+## Authentication
+
+The plugin authenticates to the [Atlas Administration API](https://www.mongodb.com/docs/atlas/api/api-authentication/)
+with one of:
+
+- A [service account](https://www.mongodb.com/docs/atlas/api/service-accounts-overview/): set `client_id` and `client_secret`.
+  The plugin uses the OAuth 2.0 client credentials flow and fetches new access tokens as needed.
+- A programmatic API key: set `public_key` and `private_key`.
+
+Set exactly one of the two. To switch an existing connection to the other method,
+set the fields of the unused method to an empty string.
+
+The service account or API key needs the Project Database Access Admin role on the project.
+Service accounts also have an IP access list, and their secrets expire, so plan to rotate them.
+
 ## Quick Links
 
 - [Database Secrets Engine for MongoDB Atlas - Docs](https://developer.hashicorp.com/vault/docs/secrets/databases/mongodbatlas)
@@ -31,8 +46,9 @@ directly via [security@mongodb.com](mailto:security@mongodb.com) or
 ## Acceptance Testing
 
 In order to perform acceptance testing, you need to provide all of the necessary information to
-connect to a MongoDB Atlas Project. All `ATLAS_*` environment variables must be
-provided in order for the acceptance tests to run properly. A cluster must be
+connect to a MongoDB Atlas Project. All `ATLAS_*` environment variables except
+the optional service account ones must be provided in order for the acceptance
+tests to run properly. A cluster must be
 available during the test. A
 [free tier cluster](https://docs.atlas.mongodb.com/tutorial/deploy-free-tier-cluster/)
 can be provisioned manually to test.
@@ -44,6 +60,11 @@ can be provisioned manually to test.
 | ATLAS_PROJECT_ID     | The desired project ID or group ID                               |
 | ATLAS_CLUSTER_NAME   | The desired cluster's name, e.g., vault-project.xyz.mongodb.net  |
 | ATLAS_ALLOWLIST_IP   | The public IP of the machine that the test is being performed    |
+| ATLAS_CLIENT_ID      | Optional. The Atlas service account client ID                    |
+| ATLAS_CLIENT_SECRET  | Optional. The Atlas service account client secret                |
+
+The service account test runs only when `ATLAS_CLIENT_ID` and `ATLAS_CLIENT_SECRET` are set.
+It still uses the API key to set up the test and check the result.
 
 Then you can run `make testacc` to execute the tests.
 
