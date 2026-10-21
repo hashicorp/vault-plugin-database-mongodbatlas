@@ -6,6 +6,7 @@ package mongodbatlas
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"sync"
 
@@ -123,6 +124,19 @@ func serviceAccountClient(clientID, clientSecret, tokenURL string) *http.Client 
 	// The client is cached and outlives any single request, so it must not
 	// use a request context.
 	return config.Client(context.Background())
+}
+
+// tokenError replaces an error from fetching a service account access token
+// with one that keeps the reason but doesn't wrap *url.Error. The HTTP client
+// wraps transport errors in *url.Error, and the database error sanitizer
+// replaces any such error with "unable to parse connection url", which would
+// hide causes such as an expired client secret.
+func tokenError(err error) error {
+	var retrieveErr *oauth2.RetrieveError
+	if errors.As(err, &retrieveErr) {
+		return fmt.Errorf("failed to get an Atlas service account access token: %s", retrieveErr)
+	}
+	return err
 }
 
 func (m *mongoDBAtlasConnectionProducer) Initialize(ctx context.Context, req dbplugin.InitializeRequest) error {

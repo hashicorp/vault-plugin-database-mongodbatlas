@@ -4,9 +4,11 @@
 package mongodbatlas
 
 import (
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"reflect"
 	"sync/atomic"
 	"testing"
@@ -157,4 +159,34 @@ func TestServiceAccountClient(t *testing.T) {
 
 	// The token is reused until it expires.
 	require.EqualValues(t, 1, tokenRequests.Load())
+}
+
+func TestTokenError(t *testing.T) {
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnauthorized)
+		fmt.Fprint(w, `{"error":"invalid_client","error_description":"Invalid client credentials"}`)
+	}))
+	defer tokenServer.Close()
+
+	client := serviceAccountClient("id", "wrong-secret", tokenServer.URL)
+
+	_, err := client.Get("http://127.0.0.1:0")
+	require.Error(t, err)
+
+	// The HTTP client wraps the token error in *url.Error, which the error
+	// sanitizer would replace with "unable to parse connection url".
+	var urlErr *url.Error
+	require.ErrorAs(t, err, &urlErr)
+
+	err = tokenError(err)
+	require.False(t, errors.As(err, &urlErr), "tokenError must not wrap *url.Error")
+	require.ErrorContains(t, err, "failed to get an Atlas service account access token")
+	require.ErrorContains(t, err, "invalid_client")
+	require.NotContains(t, err.Error(), "wrong-secret")
+
+	// Other errors pass through unchanged.
+	other := errors.New("other")
+	require.Same(t, other, tokenError(other))
+	require.NoError(t, tokenError(nil))
 }
