@@ -36,6 +36,10 @@ const (
 	envVarAtlasClusterName = "ATLAS_CLUSTER_NAME"
 	envVarAtlasAllowListIP = "ATLAS_ALLOWLIST_IP"
 
+	// Optional: service account credentials for the service account tests.
+	envVarAtlasClientID     = "ATLAS_CLIENT_ID"
+	envVarAtlasClientSecret = "ATLAS_CLIENT_SECRET"
+
 	envVarRunAccTests = "VAULT_ACC"
 )
 
@@ -439,6 +443,72 @@ func TestAcceptanceDatabaseUser_DeleteUser(t *testing.T) {
 	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL, testMongoDBAtlasRole)
 
 	// Test default revocation statement
+	delReq := dbplugin.DeleteUserRequest{
+		Username: createResp.Username,
+	}
+
+	dbtesting.AssertDeleteUser(t, db, delReq)
+
+	assertCredsDoNotExist(t, projectID, publicKey, privateKey, createResp.Username)
+}
+
+// TestAcceptanceDatabaseUser_ServiceAccount creates and deletes a user with a
+// plugin authenticated by a service account. The API key is still used to set
+// up the test and to check the result.
+func TestAcceptanceDatabaseUser_ServiceAccount(t *testing.T) {
+	if !runAcceptanceTests {
+		t.SkipNow()
+	}
+
+	clientID := os.Getenv(envVarAtlasClientID)
+	clientSecret := os.Getenv(envVarAtlasClientSecret)
+	if clientID == "" || clientSecret == "" {
+		t.Skipf("%s and %s are not set", envVarAtlasClientID, envVarAtlasClientSecret)
+	}
+
+	publicKey := os.Getenv(envVarAtlasPublicKey)
+	privateKey := os.Getenv(envVarAtlasPrivateKey)
+	projectID := os.Getenv(envVarAtlasProjectID)
+	connURL := os.Getenv(envVarAtlasClusterName)
+
+	connectionDetails := map[string]interface{}{
+		"client_id":     clientID,
+		"client_secret": clientSecret,
+		"project_id":    projectID,
+	}
+
+	db := new()
+	defer dbtesting.AssertClose(t, db)
+
+	initReq := dbplugin.InitializeRequest{
+		Config: connectionDetails,
+	}
+
+	dbtesting.AssertInitialize(t, db, initReq)
+
+	password := "myreallysecurepassword"
+	createReq := dbplugin.NewUserRequest{
+		UsernameConfig: dbplugin.UsernameMetadata{
+			DisplayName: "testsa",
+			RoleName:    "test",
+		},
+		Statements: dbplugin.Statements{
+			Commands: []string{testMongoDBAtlasRole},
+		},
+		Password:   password,
+		Expiration: time.Now().Add(time.Minute),
+	}
+
+	createResp := dbtesting.AssertNewUser(t, db, createReq)
+	defer func() {
+		// Delete user directly if the test failed for any reason after this.
+		if t.Failed() {
+			deleteAtlasDBUser(t, projectID, publicKey, privateKey, createResp.Username)
+		}
+	}()
+
+	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL, testMongoDBAtlasRole)
+
 	delReq := dbplugin.DeleteUserRequest{
 		Username: createResp.Username,
 	}
