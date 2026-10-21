@@ -13,6 +13,8 @@ jobs:
       ATLAS_PRIVATE_KEY: ${{ secrets.ATLAS_PRIVATE_KEY }}
       ATLAS_PROJECT_ID: ${{ secrets.ATLAS_PROJECT_ID }}
       ATLAS_CLUSTER_NAME: ${{ secrets.ATLAS_CLUSTER_NAME }}
+      ATLAS_CLIENT_ID: ${{ secrets.ATLAS_CLIENT_ID }}
+      ATLAS_CLIENT_SECRET: ${{ secrets.ATLAS_CLIENT_SECRET }}
     steps:
     - uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
     - uses: actions/setup-go@cdcb36043654635271a94b9a6d1392de5bb323a7 # v5.0.1
