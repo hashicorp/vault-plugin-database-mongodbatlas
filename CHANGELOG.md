@@ -1,3 +1,8 @@
+## v0.18.1
+### October 23, 2026
+
+* Update .go-version and dependencies to resolve security vulnerabilities (#126)
+
 ## v0.18.0
 ### September 10, 2026
 
