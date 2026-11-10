@@ -36,6 +36,10 @@ const (
 	envVarAtlasClusterName = "ATLAS_CLUSTER_NAME"
 	envVarAtlasAllowListIP = "ATLAS_ALLOWLIST_IP"
 
+	// Optional: service account credentials for the service account tests.
+	envVarAtlasClientID     = "ATLAS_CLIENT_ID"
+	envVarAtlasClientSecret = "ATLAS_CLIENT_SECRET"
+
 	envVarRunAccTests = "VAULT_ACC"
 )
 
@@ -448,6 +452,72 @@ func TestAcceptanceDatabaseUser_DeleteUser(t *testing.T) {
 	assertCredsDoNotExist(t, projectID, publicKey, privateKey, createResp.Username)
 }
 
+// TestAcceptanceDatabaseUser_ServiceAccount creates and deletes a user with a
+// plugin authenticated by a service account. The API key is still used to set
+// up the test and to check the result.
+func TestAcceptanceDatabaseUser_ServiceAccount(t *testing.T) {
+	if !runAcceptanceTests {
+		t.SkipNow()
+	}
+
+	clientID := os.Getenv(envVarAtlasClientID)
+	clientSecret := os.Getenv(envVarAtlasClientSecret)
+	if clientID == "" || clientSecret == "" {
+		t.Skipf("%s and %s are not set", envVarAtlasClientID, envVarAtlasClientSecret)
+	}
+
+	publicKey := os.Getenv(envVarAtlasPublicKey)
+	privateKey := os.Getenv(envVarAtlasPrivateKey)
+	projectID := os.Getenv(envVarAtlasProjectID)
+	connURL := os.Getenv(envVarAtlasClusterName)
+
+	connectionDetails := map[string]interface{}{
+		"client_id":     clientID,
+		"client_secret": clientSecret,
+		"project_id":    projectID,
+	}
+
+	db := new()
+	defer dbtesting.AssertClose(t, db)
+
+	initReq := dbplugin.InitializeRequest{
+		Config: connectionDetails,
+	}
+
+	dbtesting.AssertInitialize(t, db, initReq)
+
+	password := "myreallysecurepassword"
+	createReq := dbplugin.NewUserRequest{
+		UsernameConfig: dbplugin.UsernameMetadata{
+			DisplayName: "testsa",
+			RoleName:    "test",
+		},
+		Statements: dbplugin.Statements{
+			Commands: []string{testMongoDBAtlasRole},
+		},
+		Password:   password,
+		Expiration: time.Now().Add(time.Minute),
+	}
+
+	createResp := dbtesting.AssertNewUser(t, db, createReq)
+	defer func() {
+		// Delete user directly if the test failed for any reason after this.
+		if t.Failed() {
+			deleteAtlasDBUser(t, projectID, publicKey, privateKey, createResp.Username)
+		}
+	}()
+
+	assertCredsExists(t, projectID, publicKey, privateKey, createResp.Username, password, connURL, testMongoDBAtlasRole)
+
+	delReq := dbplugin.DeleteUserRequest{
+		Username: createResp.Username,
+	}
+
+	dbtesting.AssertDeleteUser(t, db, delReq)
+
+	assertCredsDoNotExist(t, projectID, publicKey, privateKey, createResp.Username)
+}
+
 func TestAcceptanceDatabaseUser_UpdateUser_Password(t *testing.T) {
 	if !runAcceptanceTests {
 		t.SkipNow()
@@ -475,6 +545,63 @@ func TestAcceptanceDatabaseUser_UpdateUser_Password(t *testing.T) {
 
 	// create the database user in advance, and test the connection
 	dbUser := "testmongouser"
+	startingPassword := "myreallysecurepassword"
+
+	createAtlasDBUser(t, projectID, publicKey, privateKey, dbUser, startingPassword)
+	defer deleteAtlasDBUser(t, projectID, publicKey, privateKey, dbUser)
+
+	assertCredsExists(t, projectID, publicKey, privateKey, dbUser, startingPassword, connURL, "")
+
+	newPassword := "some-other-password"
+
+	updateReq := dbplugin.UpdateUserRequest{
+		Username: dbUser,
+		Password: &dbplugin.ChangePassword{
+			NewPassword: newPassword,
+		},
+	}
+
+	dbtesting.AssertUpdateUser(t, db, updateReq)
+
+	assertCredsExists(t, projectID, publicKey, privateKey, dbUser, newPassword, connURL, "")
+}
+
+// TestAcceptanceDatabaseUser_ServiceAccount_UpdateUser_Password changes a
+// user's password through a service account. The API key is still used to set
+// up and check the user.
+func TestAcceptanceDatabaseUser_ServiceAccount_UpdateUser_Password(t *testing.T) {
+	if !runAcceptanceTests {
+		t.SkipNow()
+	}
+
+	clientID := os.Getenv(envVarAtlasClientID)
+	clientSecret := os.Getenv(envVarAtlasClientSecret)
+	if clientID == "" || clientSecret == "" {
+		t.Skipf("%s and %s are not set", envVarAtlasClientID, envVarAtlasClientSecret)
+	}
+
+	publicKey := os.Getenv(envVarAtlasPublicKey)
+	privateKey := os.Getenv(envVarAtlasPrivateKey)
+	projectID := os.Getenv(envVarAtlasProjectID)
+	connURL := os.Getenv(envVarAtlasClusterName)
+
+	connectionDetails := map[string]interface{}{
+		"client_id":     clientID,
+		"client_secret": clientSecret,
+		"project_id":    projectID,
+	}
+
+	db := new()
+	defer dbtesting.AssertClose(t, db)
+
+	initReq := dbplugin.InitializeRequest{
+		Config: connectionDetails,
+	}
+
+	dbtesting.AssertInitialize(t, db, initReq)
+
+	// create the database user in advance, and test the connection
+	dbUser := "testmongousersa"
 	startingPassword := "myreallysecurepassword"
 
 	createAtlasDBUser(t, projectID, publicKey, privateKey, dbUser, startingPassword)

@@ -1,3 +1,9 @@
+## Unreleased
+
+FEATURES:
+
+* Add support for Atlas service accounts (`client_id` and `client_secret`) as an alternative to programmatic API keys [[GH-125]](https://github.com/hashicorp/vault-plugin-database-mongodbatlas/pull/125)
+
 ## v0.18.1
 ### October 23, 2026
 

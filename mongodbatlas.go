@@ -142,7 +142,7 @@ func (m *MongoDBAtlas) NewUser(ctx context.Context, req dbplugin.NewUserRequest)
 
 	_, _, err = client.DatabaseUsers.Create(ctx, m.ProjectID, databaseUserRequest)
 	if err != nil {
-		return dbplugin.NewUserResponse{}, err
+		return dbplugin.NewUserResponse{}, tokenError(err)
 	}
 
 	resp := dbplugin.NewUserResponse{
@@ -176,7 +176,7 @@ func (m *MongoDBAtlas) changePassword(ctx context.Context, username, password st
 	}
 
 	_, _, err = client.DatabaseUsers.Update(context.Background(), m.ProjectID, username, databaseUserRequest)
-	return err
+	return tokenError(err)
 }
 
 func (m *MongoDBAtlas) DeleteUser(ctx context.Context, req dbplugin.DeleteUserRequest) (dbplugin.DeleteUserResponse, error) {
@@ -210,7 +210,7 @@ func (m *MongoDBAtlas) DeleteUser(ctx context.Context, req dbplugin.DeleteUserRe
 
 	_, err = client.DatabaseUsers.Delete(ctx, databaseUser.DatabaseName, m.ProjectID, req.Username)
 	if err != nil {
-		return dbplugin.DeleteUserResponse{}, fmt.Errorf("error deleting user from project: %w", err)
+		return dbplugin.DeleteUserResponse{}, fmt.Errorf("error deleting user from project: %w", tokenError(err))
 	}
 	return dbplugin.DeleteUserResponse{}, nil
 }
